@@ -13,12 +13,20 @@
     [
       false,
       true,
+      true,
       true
     ],
     [
       false,
       true,
+      true,
       true
+    ],
+    [
+      false,
+      true,
+      true,
+      false
     ]
   ],
   "design-resolution-height": 640,
@@ -29,7 +37,8 @@
   "group-list": [
     "default",
     "planet",
-    "blackHole"
+    "blackHole",
+    "wall"
   ],
   "simulator-orientation": false,
   "simulator-resolution": {
