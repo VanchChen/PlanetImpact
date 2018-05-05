@@ -96,6 +96,15 @@ cc.Class({
     },
 
     update (dt) {
-
+        if (this.earth.onContact) {
+            let vel = this.earth.getComponent(cc.RigidBody).linearVelocity;
+            //cc.log(vel);
+            if (Math.abs(vel.x) <= 0.1 && Math.abs(vel.y) <= 0.1) {
+                //运动停止
+                this.earth.onContact = false;
+                cc.log('stop');
+                //do sth ..
+            }
+        }
     },
 });

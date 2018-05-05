@@ -12,21 +12,7 @@ cc.Class({
     extends: cc.Component,
 
     properties: {
-        // foo: {
-        //     // ATTRIBUTES:
-        //     default: null,        // The default value will be used only when the component attaching
-        //                           // to a node for the first time
-        //     type: cc.SpriteFrame, // optional, default is typeof default
-        //     serializable: true,   // optional, default is true
-        // },
-        // bar: {
-        //     get () {
-        //         return this._bar;
-        //     },
-        //     set (value) {
-        //         this._bar = value;
-        //     }
-        // },
+        
     },
 
     // LIFE-CYCLE CALLBACKS:
@@ -39,11 +25,8 @@ cc.Class({
 
     // update (dt) {},
 
-    onCollisionEnter: function (other, self) {
-        console.log('on collision enter');
-        var world = self.world;
-        var aabb = world.aabb;
-        var r = world.radius;
-        var p = world.position;
+    onBeginContact (contact, selfCollider, otherCollider) {
+        this.node.onContact = true;
+        cc.log('contact')
     }
 });
