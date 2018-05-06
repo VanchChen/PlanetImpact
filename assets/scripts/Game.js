@@ -52,6 +52,14 @@ cc.Class({
             default: null,
             type: cc.Label
         },
+        singleScoreLabel: {
+            default: null,
+            type: cc.Node
+        },
+        highScoreLabel: {
+            default: null,
+            type: cc.Node
+        },
         failUI: {
             default: null,
             type: cc.Node
@@ -86,11 +94,6 @@ cc.Class({
         // 去除重力
         cc.director.getPhysicsManager().gravity = cc.v2();
 
-        // //添加触摸监听
-        // this.node.on(cc.Node.EventType.TOUCH_START, this.onTouchBegan, this);
-        // this.node.on(cc.Node.EventType.TOUCH_CANCEL, this.onTouchEnd, this);
-        // this.node.on(cc.Node.EventType.TOUCH_END, this.onTouchEnd, this);
-
         //适配墙壁
         let width = this.node.width;
         let height = this.node.height;
@@ -102,6 +105,8 @@ cc.Class({
             this._setBound(wallColliders[2],0,-height/2,width,20);
             this._setBound(wallColliders[3],width/2,0,20,height);
         }
+        
+        this.singleScoreLabel.setOpacity(0);
 
         this.restart();
     },
@@ -109,6 +114,7 @@ cc.Class({
     restart () {
         //clear score
         this.score = 0;
+        this.singleScore = 0;
         this.combo = 0;
         this.scoreLabel.getComponent(cc.Label).string = '得分: ' + this.score;
         this.failUI.active = false;
@@ -130,6 +136,7 @@ cc.Class({
 
     continue () {
         this.failUI.active = false;
+        this.singleScore = 0;
 
         this.mars.active = true;
 
@@ -197,6 +204,12 @@ cc.Class({
     fail () {
         this.failScoreLabel.getComponent(cc.Label).string = this.score;
 
+        var highScore = cc.sys.localStorage.getItem('highScore');
+        highScore = Math.max(highScore, this.score);
+        cc.sys.localStorage.setItem('highScore', highScore);
+
+        this.highScoreLabel.getComponent(cc.Label).string = '历史最高分：' + highScore;
+
         this.failUI.active = true;
         
         cc.audioEngine.playEffect(this.failAudio, false);
@@ -210,17 +223,26 @@ cc.Class({
         if (gap < (this.blackHole.width / 2 - this.earth.width / 2)) {
             //perfect
             this.combo++;
-            this.score += this.combo * 2;
+            this.singleScore = this.combo * 2;
+            this.score += this.singleScore;
             
             cc.audioEngine.playEffect(this.successPerfectAudio, false);
         } else {
             this.combo = 0;
+            this.singleScore = 1;
             this.score++;
             
             cc.audioEngine.playEffect(this.successNormalAudio, false);
         }
 
         this.scoreLabel.getComponent(cc.Label).string = '得分: ' + this.score;
+
+        //显示单次得分
+        this.singleScoreLabel.position = this.earth.position;
+        this.singleScoreLabel.getComponent(cc.Label).string = '+' + this.singleScore;
+        var showScore = cc.sequence(cc.fadeIn(0.1), cc.fadeOut(0.8));
+        this.singleScoreLabel.runAction(showScore);
+
         //suck 吸入
         var finished = cc.callFunc(function () {
             this.earth.scale = 1;
@@ -230,6 +252,8 @@ cc.Class({
         var spawn = cc.sequence(cc.spawn(cc.moveTo(0.2,this.blackHole.position), cc.scaleTo(0.2, 0)), finished);
         this.earth.getComponent(cc.RigidBody).angularVelocity = 2000;
         this.earth.runAction(spawn);
+
+
     },
 
     update (dt) {
