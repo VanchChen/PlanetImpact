@@ -17,7 +17,9 @@ cc.Class({
 
     // LIFE-CYCLE CALLBACKS:
 
-    // onLoad () {},
+    onLoad () {
+        this.node.onContact = false;
+    },
 
     start () {
 
