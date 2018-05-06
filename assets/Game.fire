@@ -263,7 +263,7 @@
     "_density": 1,
     "_sensor": false,
     "_friction": 0.2,
-    "_restitution": 0,
+    "_restitution": 1,
     "body": null,
     "_offset": {
       "__type__": "cc.Vec2",
@@ -313,7 +313,7 @@
     "_density": 1,
     "_sensor": false,
     "_friction": 0.2,
-    "_restitution": 0,
+    "_restitution": 1,
     "body": null,
     "_offset": {
       "__type__": "cc.Vec2",
@@ -888,8 +888,8 @@
     "tag": 0,
     "_density": 1,
     "_sensor": false,
-    "_friction": 0.2,
-    "_restitution": 1,
+    "_friction": 0,
+    "_restitution": 1.5,
     "body": null,
     "_offset": {
       "__type__": "cc.Vec2",
@@ -1019,8 +1019,8 @@
     "tag": 0,
     "_density": 1,
     "_sensor": false,
-    "_friction": 0.2,
-    "_restitution": 1,
+    "_friction": 0,
+    "_restitution": 1.5,
     "body": null,
     "_offset": {
       "__type__": "cc.Vec2",

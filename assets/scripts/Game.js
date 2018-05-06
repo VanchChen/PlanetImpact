@@ -118,6 +118,8 @@ cc.Class({
         this.combo = 0;
         this.scoreLabel.getComponent(cc.Label).string = '得分: ' + this.score;
         this.failUI.active = false;
+        this.blackHole.height = this.blackHole.width = 200;
+        this.hardControl = 170;
 
         this.mars.active = true;
 
@@ -132,6 +134,8 @@ cc.Class({
         this.node.on(cc.Node.EventType.TOUCH_START, this.onTouchBegan, this);
         this.node.on(cc.Node.EventType.TOUCH_CANCEL, this.onTouchEnd, this);
         this.node.on(cc.Node.EventType.TOUCH_END, this.onTouchEnd, this);
+
+        cc.audioEngine.uncacheAll();
     },
 
     continue () {
@@ -142,6 +146,10 @@ cc.Class({
 
         let width = this.node.width;
         let height = this.node.height;
+
+        //地狱难度
+        this.hardControl -= 3;
+        this.blackHole.width = this.blackHole.height = this.hardControl + Math.random() * this.hardControl * 0.3;
         
         this.mars.setPosition(Math.random() * width / 2 - width / 4, -height/3);
         this.earth.setPosition(Math.random() * width / 2 - width / 4, Math.random() * height / 4 - height / 8);
@@ -154,16 +162,16 @@ cc.Class({
     },
 
     onTouchBegan (event) {
-        if (this.marsBegan) return;
+        if (this.marsBegan || !this.mars.active) return;
 
         this.touchTime = new Date();
-        this.holdAudioID = cc.audioEngine.playEffect(this.holdAudio, false);
+        this.holdAudioID = cc.audioEngine.play(this.holdAudio, false, 1);
 
         this.touchBagan = true;
     },
 
     onTouchEnd (event) {
-        if (this.marsBegan) return;
+        if (this.marsBegan || !this.mars.active) return;
 
         cc.audioEngine.stop(this.holdAudioID);
 
@@ -197,10 +205,6 @@ cc.Class({
         node.size.height = height;
     },
 
-    start () {
-
-    },
-
     fail () {
         this.failScoreLabel.getComponent(cc.Label).string = this.score;
 
@@ -212,7 +216,7 @@ cc.Class({
 
         this.failUI.active = true;
         
-        cc.audioEngine.playEffect(this.failAudio, false);
+        cc.audioEngine.play(this.failAudio, false, 1);
         //添加触摸监听
         this.node.off(cc.Node.EventType.TOUCH_START, this.onTouchBegan, this);
         this.node.off(cc.Node.EventType.TOUCH_CANCEL, this.onTouchEnd, this);
@@ -220,19 +224,19 @@ cc.Class({
     },
 
     success (gap) {
-        if (gap < (this.blackHole.width / 2 - this.earth.width / 2)) {
+        if (gap < Math.abs(this.blackHole.width / 2 - this.earth.width / 2)) {
             //perfect
             this.combo++;
             this.singleScore = this.combo * 2;
             this.score += this.singleScore;
             
-            cc.audioEngine.playEffect(this.successPerfectAudio, false);
+            cc.audioEngine.play(this.successPerfectAudio, false, 1);
         } else {
             this.combo = 0;
             this.singleScore = 1;
             this.score++;
             
-            cc.audioEngine.playEffect(this.successNormalAudio, false);
+            cc.audioEngine.play(this.successNormalAudio, false, 1);
         }
 
         this.scoreLabel.getComponent(cc.Label).string = '得分: ' + this.score;
@@ -274,7 +278,7 @@ cc.Class({
                 //运动停止
                 this.marsBegan = false;
                 this.fail();
-                // this.restart();
+                
                 return;
             }
         }
@@ -284,7 +288,7 @@ cc.Class({
                 this.mars.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
                 this.mars.active = false;
                 this.marsBegan = false;
-                cc.audioEngine.playEffect(this.hitAudio, false);
+                cc.audioEngine.play(this.hitAudio, false, 1);
             }
 
             let vel = this.earth.getComponent(cc.RigidBody).linearVelocity;
