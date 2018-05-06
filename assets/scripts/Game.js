@@ -64,6 +64,10 @@ cc.Class({
             default: null,
             type: cc.Node
         },
+        audio: {
+            default: null,
+            type: cc.Node
+        },
         hitAudio: {
             default: null,
             url: cc.AudioClip,
@@ -134,8 +138,6 @@ cc.Class({
         this.node.on(cc.Node.EventType.TOUCH_START, this.onTouchBegan, this);
         this.node.on(cc.Node.EventType.TOUCH_CANCEL, this.onTouchEnd, this);
         this.node.on(cc.Node.EventType.TOUCH_END, this.onTouchEnd, this);
-
-        cc.audioEngine.uncacheAll();
     },
 
     continue () {
@@ -165,7 +167,8 @@ cc.Class({
         if (this.marsBegan || !this.mars.active) return;
 
         this.touchTime = new Date();
-        this.holdAudioID = cc.audioEngine.play(this.holdAudio, false, 1);
+        //this.audio.getComponents(cc.AudioSource)[1].stop();
+        this.audio.getComponents(cc.AudioSource)[1].play();
 
         this.touchBagan = true;
     },
@@ -173,7 +176,7 @@ cc.Class({
     onTouchEnd (event) {
         if (this.marsBegan || !this.mars.active) return;
 
-        cc.audioEngine.stop(this.holdAudioID);
+        this.audio.getComponents(cc.AudioSource)[1].stop();
 
         //时间毫秒差
         var diffTime = (new Date().getTime() - this.touchTime.getTime());
@@ -216,7 +219,8 @@ cc.Class({
 
         this.failUI.active = true;
         
-        cc.audioEngine.play(this.failAudio, false, 1);
+        //this.audio.getComponents(cc.AudioSource)[2].stop();
+        this.audio.getComponents(cc.AudioSource)[2].play();
         //添加触摸监听
         this.node.off(cc.Node.EventType.TOUCH_START, this.onTouchBegan, this);
         this.node.off(cc.Node.EventType.TOUCH_CANCEL, this.onTouchEnd, this);
@@ -230,13 +234,15 @@ cc.Class({
             this.singleScore = this.combo * 2;
             this.score += this.singleScore;
             
-            cc.audioEngine.play(this.successPerfectAudio, false, 1);
+            //this.audio.getComponents(cc.AudioSource)[4].stop();
+            this.audio.getComponents(cc.AudioSource)[4].play();
         } else {
             this.combo = 0;
             this.singleScore = 1;
             this.score++;
             
-            cc.audioEngine.play(this.successNormalAudio, false, 1);
+            //this.audio.getComponents(cc.AudioSource)[3].stop();
+            this.audio.getComponents(cc.AudioSource)[3].play();
         }
 
         this.scoreLabel.getComponent(cc.Label).string = '得分: ' + this.score;
@@ -288,7 +294,9 @@ cc.Class({
                 this.mars.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
                 this.mars.active = false;
                 this.marsBegan = false;
-                cc.audioEngine.play(this.hitAudio, false, 1);
+                //this.audio.getComponents(cc.AudioSource)[0].stop();
+                //cc.log(this.audio.getComponents(cc.AudioSource)[0].getCurrentTime());
+                this.audio.getComponents(cc.AudioSource)[0].play();
             }
 
             let vel = this.earth.getComponent(cc.RigidBody).linearVelocity;
