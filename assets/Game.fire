@@ -775,7 +775,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "Whiteball",
+    "_name": "Mars",
     "_objFlags": 0,
     "_parent": {
       "__id__": 2
@@ -840,7 +840,7 @@
     },
     "_enabled": true,
     "_spriteFrame": {
-      "__uuid__": "71340297-30d4-4e2c-9da6-2c4502a3a1e1"
+      "__uuid__": "d28135ba-d113-4edc-b100-e43b26de89b8"
     },
     "_type": 0,
     "_sizeMode": 0,
@@ -903,7 +903,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "Blackball",
+    "_name": "Earth",
     "_objFlags": 0,
     "_parent": {
       "__id__": 2
@@ -971,7 +971,7 @@
     },
     "_enabled": true,
     "_spriteFrame": {
-      "__uuid__": "500f2d62-2893-4c69-b116-5eac06fc3b72"
+      "__uuid__": "d28135ba-d113-4edc-b100-e43b26de89b8"
     },
     "_type": 0,
     "_sizeMode": 0,
@@ -2101,7 +2101,7 @@
     "_mute": false,
     "_loop": false,
     "playOnLoad": false,
-    "preload": false
+    "preload": true
   },
   {
     "__type__": "cc.AudioSource",
@@ -2118,7 +2118,7 @@
     "_mute": false,
     "_loop": false,
     "playOnLoad": false,
-    "preload": false
+    "preload": true
   },
   {
     "__type__": "cc.AudioSource",
@@ -2135,7 +2135,7 @@
     "_mute": false,
     "_loop": false,
     "playOnLoad": false,
-    "preload": false
+    "preload": true
   },
   {
     "__type__": "cc.AudioSource",
@@ -2152,7 +2152,7 @@
     "_mute": false,
     "_loop": false,
     "playOnLoad": false,
-    "preload": false
+    "preload": true
   },
   {
     "__type__": "cc.AudioSource",
@@ -2169,7 +2169,7 @@
     "_mute": false,
     "_loop": false,
     "playOnLoad": false,
-    "preload": false
+    "preload": true
   },
   {
     "__type__": "cc.Canvas",
@@ -2236,21 +2236,6 @@
     },
     "audio": {
       "__id__": 55
-    },
-    "hitAudio": {
-      "__uuid__": "8d4d49dd-b79c-4857-af31-d61b2622a520"
-    },
-    "holdAudio": {
-      "__uuid__": "493f6788-7626-47ec-be43-dfbbeca752a1"
-    },
-    "failAudio": {
-      "__uuid__": "efa585ba-e4e5-4549-b821-10efbb02ed1c"
-    },
-    "successNormalAudio": {
-      "__uuid__": "f13c861e-3f66-43df-b290-07bb90a20bd6"
-    },
-    "successPerfectAudio": {
-      "__uuid__": "f4eb121e-4ca9-425b-aa27-eedbca90eb0e"
     }
   }
 ]
