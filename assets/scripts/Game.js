@@ -68,26 +68,6 @@ cc.Class({
             default: null,
             type: cc.Node
         },
-        hitAudio: {
-            default: null,
-            url: cc.AudioClip,
-        },
-        holdAudio: {
-            default: null,
-            url: cc.AudioClip,
-        },
-        failAudio: {
-            default: null,
-            url: cc.AudioClip,
-        },
-        successNormalAudio: {
-            default: null,
-            url: cc.AudioClip,
-        },
-        successPerfectAudio: {
-            default: null,
-            url: cc.AudioClip,
-        },
     },
 
     // LIFE-CYCLE CALLBACKS:
@@ -167,7 +147,6 @@ cc.Class({
         if (this.marsBegan || !this.mars.active) return;
 
         this.touchTime = new Date();
-        //this.audio.getComponents(cc.AudioSource)[1].stop();
         this.audio.getComponents(cc.AudioSource)[1].play();
 
         this.touchBagan = true;
@@ -219,7 +198,6 @@ cc.Class({
 
         this.failUI.active = true;
         
-        //this.audio.getComponents(cc.AudioSource)[2].stop();
         this.audio.getComponents(cc.AudioSource)[2].play();
         //添加触摸监听
         this.node.off(cc.Node.EventType.TOUCH_START, this.onTouchBegan, this);
@@ -233,15 +211,13 @@ cc.Class({
             this.combo++;
             this.singleScore = this.combo * 2;
             this.score += this.singleScore;
-            
-            //this.audio.getComponents(cc.AudioSource)[4].stop();
+
             this.audio.getComponents(cc.AudioSource)[4].play();
         } else {
             this.combo = 0;
             this.singleScore = 1;
             this.score++;
             
-            //this.audio.getComponents(cc.AudioSource)[3].stop();
             this.audio.getComponents(cc.AudioSource)[3].play();
         }
 
@@ -262,8 +238,6 @@ cc.Class({
         var spawn = cc.sequence(cc.spawn(cc.moveTo(0.2,this.blackHole.position), cc.scaleTo(0.2, 0)), finished);
         this.earth.getComponent(cc.RigidBody).angularVelocity = 2000;
         this.earth.runAction(spawn);
-
-
     },
 
     update (dt) {
@@ -294,8 +268,6 @@ cc.Class({
                 this.mars.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
                 this.mars.active = false;
                 this.marsBegan = false;
-                //this.audio.getComponents(cc.AudioSource)[0].stop();
-                //cc.log(this.audio.getComponents(cc.AudioSource)[0].getCurrentTime());
                 this.audio.getComponents(cc.AudioSource)[0].play();
             }
 
