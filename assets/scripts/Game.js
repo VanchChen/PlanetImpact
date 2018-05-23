@@ -225,6 +225,7 @@ cc.Class({
     },
 
     resetPlanet () {
+        /*
         var earthIndex = Math.floor(Math.random() * 12) + 1;
         var self = this;
         this.earth.active = false;
@@ -241,6 +242,7 @@ cc.Class({
             self.mars.getComponent(cc.Sprite).spriteFrame = spriteFrame;
             self.mars.active = true;
         });
+        */
     },
 
     // Update:
