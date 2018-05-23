@@ -98,26 +98,12 @@ cc.Class({
     restart () {
         //clear score
         this.score = 0;
-        this.singleScore = 0;
         this.combo = 0;
         this.scoreLabel.getComponent(cc.Label).string = '得分: ' + this.score;
-        this.failUI.active = false;
         this.blackHole.height = this.blackHole.width = 200;
         this.hardControl = 170;
 
-        this.mars.active = true;
-
-        let width = this.node.width;
-        let height = this.node.height;
-        
-        this.mars.setPosition(Math.random() * width / 2 - width / 4, -height/3);
-        this.earth.setPosition(Math.random() * width / 2 - width / 4, Math.random() * height / 4 - height / 8);
-        this.blackHole.setPosition(Math.random() * width / 2 - width / 4, height / 3);
-
-        //添加触摸监听
-        this.node.on(cc.Node.EventType.TOUCH_START, this.onTouchBegan, this);
-        this.node.on(cc.Node.EventType.TOUCH_CANCEL, this.onTouchEnd, this);
-        this.node.on(cc.Node.EventType.TOUCH_END, this.onTouchEnd, this);
+        this.continue();
     },
 
     continue () {
@@ -137,12 +123,16 @@ cc.Class({
         this.earth.setPosition(Math.random() * width / 2 - width / 4, Math.random() * height / 4 - height / 8);
         this.blackHole.setPosition(Math.random() * width / 2 - width / 4, height / 3);
 
+        //重置星球纹理
+        this.resetPlanet();
+
         //添加触摸监听
         this.node.on(cc.Node.EventType.TOUCH_START, this.onTouchBegan, this);
         this.node.on(cc.Node.EventType.TOUCH_CANCEL, this.onTouchEnd, this);
         this.node.on(cc.Node.EventType.TOUCH_END, this.onTouchEnd, this);
     },
 
+    // Touch Event:
     onTouchBegan (event) {
         if (this.marsBegan || !this.mars.active) return;
 
@@ -180,13 +170,7 @@ cc.Class({
         this.mars.height = 80;
     },
 
-    _setBound (node,x, y, width, height) {
-        node.offset.x = x;
-        node.offset.y = y;
-        node.size.width = width;
-        node.size.height = height;
-    },
-
+    // Logic:
     fail () {
         this.failScoreLabel.getComponent(cc.Label).string = this.score;
 
@@ -240,6 +224,26 @@ cc.Class({
         this.earth.runAction(spawn);
     },
 
+    resetPlanet () {
+        var earthIndex = Math.floor(Math.random() * 12) + 1;
+        var self = this;
+        this.earth.active = false;
+        cc.loader.loadRes(earthIndex.toString(), cc.SpriteFrame, function (err, spriteFrame) {
+            self.earth.getComponent(cc.Sprite).spriteFrame = spriteFrame;
+            self.earth.active = true;
+        });
+        var marsIndex;
+        do {
+            marsIndex = Math.floor(Math.random() * 12) + 1;
+        } while (marsIndex == earthIndex)
+        this.mars.active = false;
+        cc.loader.loadRes(marsIndex.toString(), cc.SpriteFrame, function (err, spriteFrame) {
+            self.mars.getComponent(cc.Sprite).spriteFrame = spriteFrame;
+            self.mars.active = true;
+        });
+    },
+
+    // Update:
     update (dt) {
         this.updateBg();
 
@@ -303,5 +307,13 @@ cc.Class({
             this.bg3.setPosition(-160 - height, 0);
             this.bg4.setPosition(-160 - height, -height);
         }
-    }
+    },
+
+    // Extension:
+    _setBound (node,x, y, width, height) {
+        node.offset.x = x;
+        node.offset.y = y;
+        node.size.width = width;
+        node.size.height = height;
+    },
 });
