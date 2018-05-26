@@ -68,6 +68,10 @@ cc.Class({
             default: null,
             type: cc.Node
         },
+        circle: {
+            default: null,
+            type: cc.Node
+        },
     },
 
     // LIFE-CYCLE CALLBACKS:
@@ -91,6 +95,7 @@ cc.Class({
         }
         
         this.singleScoreLabel.setOpacity(0);
+        this.circle.setOpacity(0);
 
         this.restart();
     },
@@ -128,46 +133,9 @@ cc.Class({
 
         //添加触摸监听
         this.node.on(cc.Node.EventType.TOUCH_START, this.onTouchBegan, this);
+        this.node.on(cc.Node.EventType.TOUCH_MOVE, this.onTouchMove, this);
         this.node.on(cc.Node.EventType.TOUCH_CANCEL, this.onTouchEnd, this);
         this.node.on(cc.Node.EventType.TOUCH_END, this.onTouchEnd, this);
-    },
-
-    // Touch Event:
-    onTouchBegan (event) {
-        if (this.marsBegan || !this.mars.active) return;
-
-        this.touchTime = new Date();
-        this.audio.getComponents(cc.AudioSource)[1].play();
-
-        this.touchBagan = true;
-    },
-
-    onTouchEnd (event) {
-        if (this.marsBegan || !this.mars.active) return;
-
-        this.audio.getComponents(cc.AudioSource)[1].stop();
-
-        //时间毫秒差
-        var diffTime = (new Date().getTime() - this.touchTime.getTime());
-        diffTime = Math.min(diffTime, 3000);//最大3秒
-        diffTime = Math.max(diffTime, 500);//最小1秒
-
-        let rigidBody = this.mars.getComponent(cc.RigidBody);
-        let center = rigidBody.getWorldCenter();
-        //计算方向向量
-        var vel = cc.v2(event.touch.getLocation()).sub(center).normalizeSelf();
-        //乘以质量和最大初速度
-        vel = vel.mulSelf(rigidBody.getMass() * 7500);
-        //根据时间差调整力度
-        vel = vel.mulSelf(diffTime).divSelf(3000);
-        //实施动量
-        rigidBody.applyLinearImpulse(vel,rigidBody.getWorldCenter(),true);
-        //motion start
-        this.marsBegan = true;
-        //restore size
-        this.touchBagan = false;
-        this.mars.width = 80;
-        this.mars.height = 80;
     },
 
     // Logic:
@@ -185,6 +153,7 @@ cc.Class({
         this.audio.getComponents(cc.AudioSource)[2].play();
         //添加触摸监听
         this.node.off(cc.Node.EventType.TOUCH_START, this.onTouchBegan, this);
+        this.node.off(cc.Node.EventType.TOUCH_MOVE, this.onTouchMove, this);
         this.node.off(cc.Node.EventType.TOUCH_CANCEL, this.onTouchEnd, this);
         this.node.off(cc.Node.EventType.TOUCH_END, this.onTouchEnd, this);
     },
@@ -225,7 +194,6 @@ cc.Class({
     },
 
     resetPlanet () {
-        /*
         var earthIndex = Math.floor(Math.random() * 12) + 1;
         var self = this;
         this.earth.active = false;
@@ -242,7 +210,53 @@ cc.Class({
             self.mars.getComponent(cc.Sprite).spriteFrame = spriteFrame;
             self.mars.active = true;
         });
-        */
+    },
+
+    // Touch Event:
+    onTouchBegan (event) {
+        if (this.marsBegan || !this.mars.active) return;
+
+        this.touchTime = new Date();
+        this.audio.getComponents(cc.AudioSource)[1].play();
+
+        this.touchBagan = true;
+        //展示圆圈
+        this.circle.setOpacity(255);
+        this.onTouchMove(event);
+    },
+
+    onTouchMove (event) {
+        this.circle.setPosition(this.node.convertToNodeSpaceAR(cc.v2(event.touch.getLocation())));
+    },
+
+    onTouchEnd (event) {
+        if (this.marsBegan || !this.mars.active) return;
+
+        this.audio.getComponents(cc.AudioSource)[1].stop();
+
+        //时间毫秒差
+        var diffTime = (new Date().getTime() - this.touchTime.getTime());
+        diffTime = Math.min(diffTime, 3000);//最大3秒
+        diffTime = Math.max(diffTime, 500);//最小1秒
+
+        let rigidBody = this.mars.getComponent(cc.RigidBody);
+        let center = rigidBody.getWorldCenter();
+        //计算方向向量
+        var vel = cc.v2(event.touch.getLocation()).sub(center).normalizeSelf();
+        //乘以质量和最大初速度
+        vel = vel.mulSelf(rigidBody.getMass() * 7500);
+        //根据时间差调整力度
+        vel = vel.mulSelf(diffTime).divSelf(3000);
+        //实施动量
+        rigidBody.applyLinearImpulse(vel,rigidBody.getWorldCenter(),true);
+        //motion start
+        this.marsBegan = true;
+        //restore size
+        this.touchBagan = false;
+        this.mars.width = 80;
+        this.mars.height = 80;
+        //圆圈消失
+        this.circle.setOpacity(0);
     },
 
     // Update:
