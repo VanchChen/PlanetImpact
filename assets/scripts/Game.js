@@ -242,8 +242,17 @@ cc.Class({
 
     // Touch Event:
     onTouchBegan (event) {
+        if (this.loginScane.active) {
+            return;
+        }
+
         if (this.guideScane.active) {
-            this.guideScane.active = false;
+            var self = this;
+            var finished = cc.callFunc(function () {
+                self.guideScane.active = false;
+            }, this, 0);
+            var fadeAction = cc.sequence(cc.fadeOut(0.2), finished);
+            this.guideScane.runAction(fadeAction); 
 
             event.stopPropagation();
             return;
@@ -298,7 +307,7 @@ cc.Class({
     login () {
         this.loginScane.active = false;
 
-        var notVirgin = cc.sys.localStorage.getItem('notVirgin');
+        var notVirgin = false;//cc.sys.localStorage.getItem('notVirgin');
         if (!notVirgin) {
             cc.sys.localStorage.setItem('notVirgin', 1);
             this.guideScane.active = true;
