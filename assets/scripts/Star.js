@@ -12,23 +12,20 @@ cc.Class({
     extends: cc.Component,
 
     properties: {
-        
     },
 
     // LIFE-CYCLE CALLBACKS:
-
     onLoad () {
         this.node.onContact = false;
     },
 
-    start () {
-
-    },
-
-    // update (dt) {},
-
     onBeginContact (contact, selfCollider, otherCollider) {
         this.node.onContact = true;
-        cc.log('contact')
-    }
+        console.log('contact' + Global.bounceCount);
+
+        if (otherCollider.tag >= 10) {
+            Global.bounceCount++;
+        }
+    },
+
 });

@@ -8,6 +8,12 @@
 //  - [Chinese] http://docs.cocos.com/creator/manual/zh/scripting/life-cycle-callbacks.html
 //  - [English] http://www.cocos2d-x.org/docs/creator/en/scripting/life-cycle-callbacks.html
 
+window.Global = {
+    bounceCount: 0,
+};
+
+const CircleOpacity = 60;
+
 cc.Class({
     extends: cc.Component,
 
@@ -60,7 +66,11 @@ cc.Class({
             default: null,
             type: cc.Node
         },
-        failUI: {
+        failScane: {
+            default: null,
+            type: cc.Node
+        },
+        loginScane: {
             default: null,
             type: cc.Node
         },
@@ -86,13 +96,11 @@ cc.Class({
         let width = this.node.width;
         let height = this.node.height;
         let wallColliders = this.wall.getComponents(cc.PhysicsBoxCollider);
-        if (wallColliders.length >= 4) {
-            //上左下右
-            this._setBound(wallColliders[0],0,height/2,width,20);
-            this._setBound(wallColliders[1],-width/2,0,20,height);
-            this._setBound(wallColliders[2],0,-height/2,width,20);
-            this._setBound(wallColliders[3],width/2,0,20,height);
-        }
+        this._setBound(wallColliders[0],-width/2,0,3,height);
+        this._setBound(wallColliders[1],width/2,0,3,height);
+        //this._setFrame(this.failScane,0,0,width,height);
+        this.failScane.setPosition(cc.v2(0,0));
+        this.loginScane.setPosition(cc.v2(0,0));
         
         this.singleScoreLabel.setOpacity(0);
         this.circle.setOpacity(0);
@@ -101,18 +109,19 @@ cc.Class({
     },
 
     restart () {
+        this.failing = false;
+
         //clear score
         this.score = 0;
         this.combo = 0;
         this.scoreLabel.getComponent(cc.Label).string = '得分: ' + this.score;
         this.blackHole.height = this.blackHole.width = 200;
-        this.hardControl = 170;
 
         this.continue();
     },
 
     continue () {
-        this.failUI.active = false;
+        this.failScane.active = false;
         this.singleScore = 0;
 
         this.mars.active = true;
@@ -120,16 +129,31 @@ cc.Class({
         let width = this.node.width;
         let height = this.node.height;
 
-        //地狱难度
-        this.hardControl -= 3;
-        this.blackHole.width = this.blackHole.height = this.hardControl + Math.random() * this.hardControl * 0.3;
+        //科学难度
+        var holeRadius;
+        if (this.score <= 20) {
+            holeRadius = Math.random() * 40 + 160;
+        } else if (this.score <= 50) {
+            holeRadius = Math.random() * 25 + 130;
+        } else if (this.score <= 100) {
+            holeRadius = Math.random() * 10 + 100;
+        } else {
+            holeRadius = Math.random() * 5 + 70;
+        }
+        this.blackHole.width = this.blackHole.height = holeRadius;
         
         this.mars.setPosition(Math.random() * width / 2 - width / 4, -height/3);
         this.earth.setPosition(Math.random() * width / 2 - width / 4, Math.random() * height / 4 - height / 8);
         this.blackHole.setPosition(Math.random() * width / 2 - width / 4, height / 3);
+        
+        this.mars.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
+        this.earth.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
 
-        //重置星球纹理
-        this.resetPlanet();
+        //clear bounce count
+        Global.bounceCount = 0;
+
+        //恢复火星
+        this.mars.active = true;
 
         //添加触摸监听
         this.node.on(cc.Node.EventType.TOUCH_START, this.onTouchBegan, this);
@@ -140,6 +164,10 @@ cc.Class({
 
     // Logic:
     fail () {
+        // reset
+        this.failing = true;
+        this.marsBegan = false;
+
         this.failScoreLabel.getComponent(cc.Label).string = this.score;
 
         var highScore = cc.sys.localStorage.getItem('highScore');
@@ -148,7 +176,7 @@ cc.Class({
 
         this.highScoreLabel.getComponent(cc.Label).string = '历史最高分：' + highScore;
 
-        this.failUI.active = true;
+        this.failScane.active = true;
         
         this.audio.getComponents(cc.AudioSource)[2].play();
         //添加触摸监听
@@ -156,10 +184,11 @@ cc.Class({
         this.node.off(cc.Node.EventType.TOUCH_MOVE, this.onTouchMove, this);
         this.node.off(cc.Node.EventType.TOUCH_CANCEL, this.onTouchEnd, this);
         this.node.off(cc.Node.EventType.TOUCH_END, this.onTouchEnd, this);
-    },
+    },//
 
     success (gap) {
-        if (gap < Math.abs(this.blackHole.width / 2 - this.earth.width / 2)) {
+        var border = Math.max(Math.abs(this.blackHole.width / 2 - this.earth.width / 2), this.earth.width / 2);
+        if (gap < border) {
             //perfect
             this.combo++;
             this.singleScore = this.combo * 2;
@@ -174,11 +203,22 @@ cc.Class({
             this.audio.getComponents(cc.AudioSource)[3].play();
         }
 
-        this.scoreLabel.getComponent(cc.Label).string = '得分: ' + this.score;
-
         //显示单次得分
         this.singleScoreLabel.position = this.earth.position;
-        this.singleScoreLabel.getComponent(cc.Label).string = '+' + this.singleScore;
+        var scoreText = '';
+        if (this.combo > 0) {
+            scoreText = '完美';
+        } else {
+            scoreText = '命中';
+        }
+        scoreText += '  +' + this.singleScore;
+        var bounceScore = Global.bounceCount * (this.combo + 1);
+        this.score += bounceScore;
+        if (bounceScore > 0) {
+            scoreText += '\n反弹  +' + bounceScore;
+        }
+        this.singleScoreLabel.getComponent(cc.Label).string = scoreText;
+        this.scoreLabel.getComponent(cc.Label).string = '得分: ' + this.score;
         var showScore = cc.sequence(cc.fadeIn(0.1), cc.fadeOut(0.8));
         this.singleScoreLabel.runAction(showScore);
 
@@ -193,25 +233,6 @@ cc.Class({
         this.earth.runAction(spawn);
     },
 
-    resetPlanet () {
-        var earthIndex = Math.floor(Math.random() * 12) + 1;
-        var self = this;
-        this.earth.active = false;
-        cc.loader.loadRes(earthIndex.toString(), cc.SpriteFrame, function (err, spriteFrame) {
-            self.earth.getComponent(cc.Sprite).spriteFrame = spriteFrame;
-            self.earth.active = true;
-        });
-        var marsIndex;
-        do {
-            marsIndex = Math.floor(Math.random() * 12) + 1;
-        } while (marsIndex == earthIndex)
-        this.mars.active = false;
-        cc.loader.loadRes(marsIndex.toString(), cc.SpriteFrame, function (err, spriteFrame) {
-            self.mars.getComponent(cc.Sprite).spriteFrame = spriteFrame;
-            self.mars.active = true;
-        });
-    },
-
     // Touch Event:
     onTouchBegan (event) {
         if (this.marsBegan || !this.mars.active) return;
@@ -221,13 +242,13 @@ cc.Class({
 
         this.touchBagan = true;
         //展示圆圈
-        this.circle.setOpacity(255);
+        this.circle.setOpacity(CircleOpacity);
         this.onTouchMove(event);
     },
 
     onTouchMove (event) {
         this.circle.setPosition(this.node.convertToNodeSpaceAR(cc.v2(event.touch.getLocation())));
-    },
+    },//
 
     onTouchEnd (event) {
         if (this.marsBegan || !this.mars.active) return;
@@ -259,9 +280,18 @@ cc.Class({
         this.circle.setOpacity(0);
     },
 
+    // Action:
+    login () {
+        this.loginScane.active = false;
+    },
+
     // Update:
     update (dt) {
         this.updateBg();
+
+        if (this.failing) {
+            return;
+        }
 
         if (this.touchBagan) {
             if (this.mars.width > 60) {
@@ -272,11 +302,17 @@ cc.Class({
             return;
         }
 
+        if (Global.bounceCount >= 15) {
+            console.log("fail0");
+            this.fail();
+            return;
+        }
+
         if (this.marsBegan && !this.earth.onContact) {
             let marsVel = this.mars.getComponent(cc.RigidBody).linearVelocity;
             if (Math.abs(marsVel.x) <= 0.5 && Math.abs(marsVel.y) <= 0.5) {
                 //运动停止
-                this.marsBegan = false;
+                console.log("fail1");
                 this.fail();
                 
                 return;
@@ -303,6 +339,7 @@ cc.Class({
                 if (gap <= (this.earth.width / 2 + this.blackHole.width / 2)) {
                     this.success(gap);
                 } else {
+                    console.log("fail2");
                     this.fail();
                 }
             }
@@ -331,5 +368,11 @@ cc.Class({
         node.offset.y = y;
         node.size.width = width;
         node.size.height = height;
+    },
+    _setFrame (node,x,y,width,height) {
+        node.position.x = x;
+        node.position.y = y;
+        node.width = width;
+        node.height = height;
     },
 });
