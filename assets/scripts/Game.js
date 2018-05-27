@@ -74,6 +74,10 @@ cc.Class({
             default: null,
             type: cc.Node
         },
+        guideScane: {
+            default: null,
+            type: cc.Node
+        },
         audio: {
             default: null,
             type: cc.Node
@@ -101,6 +105,8 @@ cc.Class({
         //this._setFrame(this.failScane,0,0,width,height);
         this.failScane.setPosition(cc.v2(0,0));
         this.loginScane.setPosition(cc.v2(0,0));
+        this.guideScane.setPosition(cc.v2(0,0));
+        this.guideScane.active = false;
         
         this.singleScoreLabel.setOpacity(0);
         this.circle.setOpacity(0);
@@ -167,6 +173,7 @@ cc.Class({
         // reset
         this.failing = true;
         this.marsBegan = false;
+        this.earth.onContact = false;
 
         this.failScoreLabel.getComponent(cc.Label).string = this.score;
 
@@ -235,6 +242,13 @@ cc.Class({
 
     // Touch Event:
     onTouchBegan (event) {
+        if (this.guideScane.active) {
+            this.guideScane.active = false;
+
+            event.stopPropagation();
+            return;
+        }
+
         if (this.marsBegan || !this.mars.active) return;
 
         this.touchTime = new Date();
@@ -283,6 +297,12 @@ cc.Class({
     // Action:
     login () {
         this.loginScane.active = false;
+
+        var notVirgin = cc.sys.localStorage.getItem('notVirgin');
+        if (!notVirgin) {
+            cc.sys.localStorage.setItem('notVirgin', 1);
+            this.guideScane.active = true;
+        }
     },
 
     // Update:
