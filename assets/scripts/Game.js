@@ -354,6 +354,7 @@ cc.Class({
                 this.mars.active = false;
                 this.marsBegan = false;
                 this.audio.getComponents(cc.AudioSource)[0].play();
+                wx.vibrateShort();
             }
 
             let vel = this.earth.getComponent(cc.RigidBody).linearVelocity;
