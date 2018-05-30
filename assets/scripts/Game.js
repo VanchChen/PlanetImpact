@@ -147,6 +147,14 @@ cc.Class({
             holeRadius = Math.random() * 5 + 70;
         }
         this.blackHole.width = this.blackHole.height = holeRadius;
+        //重置黑洞
+        var holeIndex = Math.floor(Math.random() * 6) + 1;
+        this.blackHole.active = false;	
+        var self = this;
+        cc.loader.loadRes('Goal' + holeIndex, cc.SpriteFrame, function (err, spriteFrame) {	
+            self.blackHole.getComponent(cc.Sprite).spriteFrame = spriteFrame;	
+            self.blackHole.active = true;	
+        });
         
         this.mars.setPosition(Math.random() * width / 2 - width / 4, -height/3);
         this.earth.setPosition(Math.random() * width / 2 - width / 4, Math.random() * height / 4 - height / 8);
