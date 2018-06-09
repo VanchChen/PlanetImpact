@@ -113,6 +113,9 @@ cc.Class({
         this.singleScoreLabel.setOpacity(0);
         this.circle.setOpacity(0);
 
+        //音乐
+        this._setupMusic();
+
         this.restart();
     },
 
@@ -194,7 +197,8 @@ cc.Class({
 
         this.failScane.active = true;
         
-        this.audio.getComponents(cc.AudioSource)[2].play();
+        this.failAudio.play();
+        //this.audio.getComponents(cc.AudioSource)[2].play();
         //添加触摸监听
         this.node.off(cc.Node.EventType.TOUCH_START, this.onTouchBegan, this);
         this.node.off(cc.Node.EventType.TOUCH_MOVE, this.onTouchMove, this);
@@ -210,13 +214,15 @@ cc.Class({
             this.singleScore = this.combo * 2;
             this.score += this.singleScore;
 
-            this.audio.getComponents(cc.AudioSource)[4].play();
+            this.perfectAudio.play();
+            //this.audio.getComponents(cc.AudioSource)[4].play();
         } else {
             this.combo = 0;
             this.singleScore = 1;
             this.score++;
             
-            this.audio.getComponents(cc.AudioSource)[3].play();
+            this.normalAudio.play();
+            //this.audio.getComponents(cc.AudioSource)[3].play();
         }
 
         //显示单次得分
@@ -270,7 +276,9 @@ cc.Class({
         if (this.marsBegan || !this.mars.active) return;
 
         this.touchTime = new Date();
-        this.audio.getComponents(cc.AudioSource)[1].play();
+        this.holdAudio.currentTime = 0;
+        this.holdAudio.play();
+        //this.audio.getComponents(cc.AudioSource)[1].play();
 
         this.touchBagan = true;
         //展示圆圈
@@ -285,7 +293,8 @@ cc.Class({
     onTouchEnd (event) {
         if (this.marsBegan || !this.mars.active) return;
 
-        this.audio.getComponents(cc.AudioSource)[1].stop();
+        this.holdAudio.pause();
+        //this.audio.getComponents(cc.AudioSource)[1].stop();
 
         //时间毫秒差
         var diffTime = (new Date().getTime() - this.touchTime.getTime());
@@ -297,7 +306,7 @@ cc.Class({
         //计算方向向量
         var vel = cc.v2(event.touch.getLocation()).sub(center).normalizeSelf();
         //乘以质量和最大初速度
-        vel = vel.mulSelf(rigidBody.getMass() * 7500);
+        vel = vel.mulSelf(rigidBody.getMass() * 5000);//最大速度改小，原为7500
         //根据时间差调整力度
         vel = vel.mulSelf(diffTime).divSelf(3000);
         //实施动量
@@ -369,7 +378,10 @@ cc.Class({
                 this.mars.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
                 this.mars.active = false;
                 this.marsBegan = false;
-                this.audio.getComponents(cc.AudioSource)[0].play();
+
+                this.hitAudio.play();
+                //this.audio.getComponents(cc.AudioSource)[0].play();
+
                 wx.vibrateShort();
             }
 
@@ -462,6 +474,14 @@ cc.Class({
         this._setFrame(this.earth, 0, 0 , this.normalPlanetWidth, this.normalPlanetWidth);
         this.mars.getComponent(cc.PhysicsCircleCollider).radius = this.normalPlanetWidth / 2;
         this.earth.getComponent(cc.PhysicsCircleCollider).radius = this.normalPlanetWidth / 2;
+    },
+
+    _setupMusic () {
+        this.hitAudio = new Audio('res/raw-assets/audios/Hit.mp3');
+        this.failAudio = new Audio('res/raw-assets/audios/Failure.mp3');
+        this.holdAudio = new Audio('res/raw-assets/audios/Hold.mp3');
+        this.normalAudio = new Audio('res/raw-assets/audios/SuccessNormal.mp3');
+        this.perfectAudio = new Audio('res/raw-assets/audios/SuccessPerfect.mp3');
     },
 
     _setBound (node,x, y, width, height) {
