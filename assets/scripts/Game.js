@@ -12,12 +12,16 @@ window.Global = {
     bounceCount: 0,
 };
 
-const CircleOpacity = 60;
-
 cc.Class({
     extends: cc.Component,
 
     properties: {
+        circleOpacity: 60,
+        gravityForce: 10,
+        bgOffset:0,
+        normalPlanetWidth:0,
+        minPlanetWidth:0,
+
         bg1: {
             default: null,
             type: cc.Node
@@ -89,23 +93,21 @@ cc.Class({
     },
 
     // LIFE-CYCLE CALLBACKS:
+    _setConstNum () {
+        this.normalPlanetWidth = this.node.height / 12;
+        this.minPlanetWidth = this.node.height / 16
+    },
 
     onLoad () {
         cc.director.getCollisionManager().enabled = true;
         cc.director.getPhysicsManager().enabled = true;
         // 去除重力
         cc.director.getPhysicsManager().gravity = cc.v2();
+        //常数设置
+        this._setConstNum();
 
-        //适配墙壁
-        let width = this.node.width;
-        let height = this.node.height;
-        let wallColliders = this.wall.getComponents(cc.PhysicsBoxCollider);
-        this._setBound(wallColliders[0],-width/2,0,3,height);
-        this._setBound(wallColliders[1],width/2,0,3,height);
-        //this._setFrame(this.failScane,0,0,width,height);
-        this.failScane.setPosition(cc.v2(0,0));
-        this.loginScane.setPosition(cc.v2(0,0));
-        this.guideScane.setPosition(cc.v2(0,0));
+        //UI适配
+        this._updateUI();
         this.guideScane.active = false;
         
         this.singleScoreLabel.setOpacity(0);
@@ -121,7 +123,6 @@ cc.Class({
         this.score = 0;
         this.combo = 0;
         this.scoreLabel.getComponent(cc.Label).string = '得分: ' + this.score;
-        this.blackHole.height = this.blackHole.width = 200;
 
         this.continue();
     },
@@ -138,13 +139,13 @@ cc.Class({
         //科学难度
         var holeRadius;
         if (this.score <= 20) {
-            holeRadius = Math.random() * 40 + 160;
+            holeRadius = Math.random() * height/24 + height/6;
         } else if (this.score <= 50) {
-            holeRadius = Math.random() * 25 + 130;
+            holeRadius = Math.random() * height/40 + height/8;
         } else if (this.score <= 100) {
-            holeRadius = Math.random() * 10 + 100;
+            holeRadius = Math.random() * height/96 + height*3/32;
         } else {
-            holeRadius = Math.random() * 5 + 70;
+            holeRadius = Math.random() * height/160 + height/16;
         }
         this.blackHole.width = this.blackHole.height = holeRadius;
         //重置黑洞
@@ -273,7 +274,7 @@ cc.Class({
 
         this.touchBagan = true;
         //展示圆圈
-        this.circle.setOpacity(CircleOpacity);
+        this.circle.setOpacity(this.circleOpacity);
         this.onTouchMove(event);
     },
 
@@ -305,8 +306,7 @@ cc.Class({
         this.marsBegan = true;
         //restore size
         this.touchBagan = false;
-        this.mars.width = 80;
-        this.mars.height = 80;
+        this.mars.width = this.mars.height = this.normalPlanetWidth;
         //圆圈消失
         this.circle.setOpacity(0);
     },
@@ -315,7 +315,7 @@ cc.Class({
     login () {
         this.loginScane.active = false;
 
-        var notVirgin = false;//cc.sys.localStorage.getItem('notVirgin');
+        var notVirgin = cc.sys.localStorage.getItem('notVirgin');
         if (!notVirgin) {
             cc.sys.localStorage.setItem('notVirgin', 1);
             this.guideScane.active = true;
@@ -326,12 +326,17 @@ cc.Class({
     update (dt) {
         this.updateBg();
 
+        //失败界面只更新背景图
         if (this.failing) {
             return;
         }
 
+        //模拟黑洞引力
+        //this.updateForce();
+
+        //蓄力缩小
         if (this.touchBagan) {
-            if (this.mars.width > 60) {
+            if (this.mars.width > this.minPlanetWidth) {
                 this.mars.width -= 0.3;
                 this.mars.height -= 0.3;
             }
@@ -339,12 +344,14 @@ cc.Class({
             return;
         }
 
+        //弹墙共15就算失败
         if (Global.bounceCount >= 15) {
             console.log("fail0");
             this.fail();
             return;
         }
 
+        //手松开，未碰到地球的情况下，火星停止了算失败
         if (this.marsBegan && !this.earth.onContact) {
             let marsVel = this.mars.getComponent(cc.RigidBody).linearVelocity;
             if (Math.abs(marsVel.x) <= 0.5 && Math.abs(marsVel.y) <= 0.5) {
@@ -356,6 +363,7 @@ cc.Class({
             }
         }
 
+        //碰到地球的情况
         if (this.earth.onContact) {
             if (this.mars.active) {
                 this.mars.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
@@ -391,25 +399,83 @@ cc.Class({
         this.bg3.setPosition(this.bg3.position.x + 1, this.bg3.position.y + 1);
         this.bg4.setPosition(this.bg4.position.x + 1, this.bg4.position.y + 1);
         
-        if (this.bg2.position.y >= 0) {
-            //back
-            this.bg1.setPosition(-160, 0);
-            this.bg2.setPosition(-160, -height);
-            this.bg3.setPosition(-160 - height, 0);
-            this.bg4.setPosition(-160 - height, -height);
+        if (this.bgOffset < 0 && this.bg2.position.y >= 0) {
+            //高大于宽
+            this.bg1.setPosition(this.bgOffset, 0);
+            this.bg2.setPosition(this.bgOffset, -this.bg2.height);
+            this.bg3.setPosition(this.bgOffset - this.bg3.width, 0);
+            this.bg4.setPosition(this.bgOffset - this.bg4.width, -this.bg4.height);
+        }
+        if (this.bgOffset > 0 && this.bg3.position.x >= 0) {
+            //宽大于高
+            this.bg1.setPosition(0, -this.bgOffset);
+            this.bg2.setPosition(0, -this.bgOffset - this.bg2.height);
+            this.bg3.setPosition(-this.bg3.width, -this.bgOffset);
+            this.bg4.setPosition(-this.bg4.width, -this.bgOffset - this.bg4.height);
         }
     },
 
-    // Extension:
+    updateForce () {
+        let marsBody = this.mars.getComponent(cc.RigidBody);
+        let earthBody = this.earth.getComponent(cc.RigidBody);
+        let holePosition = this.blackHole.getComponent(cc.RigidBody).getWorldCenter();
+
+        var force = holePosition.subSelf(marsBody.getWorldCenter()).normalizeSelf().mulSelf(this.gravityForce * marsBody.getMass());
+        marsBody.applyForceToCenter(force);
+        force = holePosition.subSelf(earthBody.getWorldCenter()).normalizeSelf().mulSelf(this.gravityForce * earthBody.getMass());
+        earthBody.applyForceToCenter(force);
+    },
+
+    // UI Extension:
+    _updateUI () {
+        let width = this.node.width;
+        let height = this.node.height;
+
+        //适配墙壁
+        let wallColliders = this.wall.getComponents(cc.PhysicsBoxCollider);
+        this._setBound(wallColliders[0],-width/2,0,3,height);
+        this._setBound(wallColliders[1],width/2,0,3,height);
+
+        //适配三种场景
+        this._setViewFullScreen(this.loginScane);
+        this._setViewFullScreen(this.guideScane);
+        this._setViewFullScreen(this.failScane);
+
+        //适配背景
+        var maxSize = Math.max(width, height);
+        //>0代表宽比高大，<0代表高比宽大
+        this.bgOffset = (width - height) / 2;
+        if (this.bgOffset > 0) {
+            this._setFrame(this.bg1, 0, -this.bgOffset, maxSize, maxSize);
+            this._setFrame(this.bg2, 0, -this.bgOffset - maxSize, maxSize, maxSize);
+            this._setFrame(this.bg3, -maxSize, -this.bgOffset, maxSize, maxSize);
+            this._setFrame(this.bg4, -maxSize, -this.bgOffset - maxSize, maxSize, maxSize);
+        } else {
+            this._setFrame(this.bg1, this.bgOffset, 0, maxSize, maxSize);
+            this._setFrame(this.bg2, this.bgOffset, -maxSize, maxSize, maxSize);
+            this._setFrame(this.bg3, this.bgOffset - maxSize, 0, maxSize, maxSize);
+            this._setFrame(this.bg4, this.bgOffset - maxSize, - maxSize, maxSize, maxSize);
+        }
+
+        //适配星球
+        this._setFrame(this.mars, 0, 0 , this.normalPlanetWidth, this.normalPlanetWidth);
+        this._setFrame(this.earth, 0, 0 , this.normalPlanetWidth, this.normalPlanetWidth);
+        this.mars.getComponent(cc.PhysicsCircleCollider).radius = this.normalPlanetWidth / 2;
+        this.earth.getComponent(cc.PhysicsCircleCollider).radius = this.normalPlanetWidth / 2;
+    },
+
     _setBound (node,x, y, width, height) {
         node.offset.x = x;
         node.offset.y = y;
         node.size.width = width;
         node.size.height = height;
     },
-    _setFrame (node,x,y,width,height) {
-        node.position.x = x;
-        node.position.y = y;
+    _setViewFullScreen (node) {
+        this._setFrame(node, 0, 0, this.node.width, this.node.height);
+    },
+    _setFrame (node, x, y, width, height) {
+        node.x = x;
+        node.y = y;
         node.width = width;
         node.height = height;
     },
