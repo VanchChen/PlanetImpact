@@ -25,6 +25,10 @@ cc.Class({
 
         if (otherCollider.tag >= 10) {
             Global.bounceCount++;
+            if (selfCollider.tag == 5) {
+                //地球撞击
+                wx.vibrateShort();
+            }
         }
     },
 

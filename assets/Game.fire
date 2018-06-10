@@ -962,7 +962,7 @@
     "_scaleY": 1,
     "_position": {
       "__type__": "cc.Vec2",
-      "x": 1,
+      "x": 92,
       "y": -1
     },
     "_skewX": 0,
@@ -2818,6 +2818,9 @@
     },
     "circle": {
       "__id__": 15
+    },
+    "perfectBoomPrefab": {
+      "__uuid__": "4f44967b-c2bf-45c1-a7de-95d1ba2f1a9c"
     }
   }
 ]
