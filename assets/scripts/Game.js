@@ -94,11 +94,15 @@ cc.Class({
             default: null,
             type: cc.Prefab
         },
+        galaxy: {
+            default: null,
+            type: cc.Node
+        },
     },
 
     // LIFE-CYCLE CALLBACKS:
     _setConstNum () {
-        this.normalPlanetWidth = this.node.height / 10;
+        this.normalPlanetWidth = this.node.width / 5;
         this.minPlanetWidth = this.normalPlanetWidth * 0.8;
     },
 
@@ -126,7 +130,7 @@ cc.Class({
         //clear score
         this.score = 0;
         this.combo = 0;
-        this.scoreLabel.getComponent(cc.Label).string = '得分: ' + this.score;
+        this.scoreLabel.getComponent(cc.Label).string = this.score;
 
         this.continue();
     },
@@ -153,17 +157,18 @@ cc.Class({
         }
         this.blackHole.width = this.blackHole.height = holeRadius;
         //重置黑洞
-        var holeIndex = Math.floor(Math.random() * 3) + 1;
-        this.blackHole.active = false;	
-        var self = this;
-        cc.loader.loadRes('Goal' + holeIndex, cc.SpriteFrame, function (err, spriteFrame) {	
-            self.blackHole.getComponent(cc.Sprite).spriteFrame = spriteFrame;	
-            self.blackHole.active = true;	
-        });
+        // var holeIndex = Math.floor(Math.random() * 3) + 1;
+        // this.blackHole.active = false;	
+        // var self = this;
+        // cc.loader.loadRes('Goal' + holeIndex, cc.SpriteFrame, function (err, spriteFrame) {	
+        //     self.blackHole.getComponent(cc.Sprite).spriteFrame = spriteFrame;	
+        //     self.blackHole.active = true;	
+        // });
         
         this.mars.setPosition(Math.random() * width / 2 - width / 4, -height/3);
         this.earth.setPosition(Math.random() * width / 2 - width / 4, Math.random() * height / 4 - height / 8);
         this.blackHole.setPosition(Math.random() * width / 2 - width / 4, height / 3);
+        this.galaxy.setPosition(this.blackHole.position);
         
         this.mars.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
         this.earth.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
@@ -224,11 +229,11 @@ cc.Class({
         }
 
         //动画
-        var newStar = cc.instantiate(this.perfectBoomPrefab);
-        // 将新增的节点添加到 Canvas 节点下面
-        this.node.addChild(newStar);
-        // 为星星设置一个随机位置
-        newStar.setPosition(this.blackHole.position);
+        // var newStar = cc.instantiate(this.perfectBoomPrefab);
+        // // 将新增的节点添加到 Canvas 节点下面
+        // this.node.addChild(newStar);
+        // // 为星星设置一个随机位置
+        // newStar.setPosition(this.blackHole.position);
 
         //显示单次得分
         this.singleScoreLabel.position = this.earth.position;
@@ -245,14 +250,14 @@ cc.Class({
             scoreText += '\n反弹  +' + bounceScore;
         }
         this.singleScoreLabel.getComponent(cc.Label).string = scoreText;
-        this.scoreLabel.getComponent(cc.Label).string = '得分: ' + this.score;
+        this.scoreLabel.getComponent(cc.Label).string = this.score;
         var showScore = cc.sequence(cc.fadeIn(0.1), cc.fadeOut(0.8));
         this.singleScoreLabel.runAction(showScore);
 
         //suck 吸入
         var finished = cc.callFunc(function () {
             this.earth.scale = 1;
-            this.earth.getComponent(cc.RigidBody).angularVelocity = 0;
+            this.earth.getComponent(cc.RigidBody).angularVelocity = 100;
             this.continue();
         }, this);
         var spawn = cc.sequence(cc.spawn(cc.moveTo(0.2,this.blackHole.position), cc.scaleTo(0.2, 0)), finished);
@@ -308,7 +313,7 @@ cc.Class({
         //计算方向向量
         var vel = cc.v2(event.touch.getLocation()).sub(center).normalizeSelf();
         //乘以质量和最大初速度
-        vel = vel.mulSelf(rigidBody.getMass() * 7500);
+        vel = vel.mulSelf(rigidBody.getMass() * 7000);
         //根据时间差调整力度
         vel = vel.mulSelf(diffTime).divSelf(3000);
         //实施动量
