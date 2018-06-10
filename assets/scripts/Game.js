@@ -94,6 +94,7 @@ cc.Class({
             default: null,
             type: cc.Prefab
         },
+        display: cc.Sprite
     },
 
     // LIFE-CYCLE CALLBACKS:
@@ -118,6 +119,13 @@ cc.Class({
         this.circle.setOpacity(0);
 
         this.restart();
+    },
+
+    start() {
+            // this.tex = new cc.Texture2D();
+            // window.sharedCanvas.width = 720;
+            // window.sharedCanvas.height = 1280;
+        this.tex = new cc.Texture2D();
     },
 
     restart () {
@@ -195,6 +203,7 @@ cc.Class({
         cc.sys.localStorage.setItem('highScore', highScore);
 
         this.highScoreLabel.getComponent(cc.Label).string = '历史最高分：' + highScore;
+        this.submitScore(highScore);
 
         this.failScane.active = true;
         
@@ -333,6 +342,27 @@ cc.Class({
         }
     },
 
+    rankTapped () {
+        console.log('rank');
+        
+        wx.postMessage({
+            message: 'Show'
+        })
+        // this.tex = new cc.Texture2D();
+        // let openDataContext = wx.getOpenDataContext()
+        // console.log(openDataContext);
+        // openDataContext.postMessage({
+        //     text: 'hello'
+        // })
+    },
+
+    submitScore (score){
+        wx.postMessage({
+            message: 'Submit',
+            score: score
+        });
+    },
+
     // Update:
     update (dt) {
         this.updateBg();
@@ -403,6 +433,27 @@ cc.Class({
                 }
             }
         }
+        this._updaetSubDomainCanvas();
+    },
+
+    // _updateSubDomainCanvas() {
+    //     if (!this.tex) {
+    //         return;
+    //     }
+    //     const sharedCanvas = wxapi.wxOpenData.wxGetSharedCanvas();
+    //     this.tex.initWithElement(sharedCanvas);
+    //     this.tex.handleLoadedTexture();
+    //     this.rankingScrollView.setTexture(this.tex);
+    //     this.rankingScrollView.spriteFrame = new cc.SpriteFrame(this.tex);
+    // },
+
+    _updaetSubDomainCanvas () {
+        if (!this.tex) {
+            return;
+        }
+        this.tex.initWithElement(sharedCanvas);
+        this.tex.handleLoadedTexture();
+        this.display.spriteFrame = new cc.SpriteFrame(this.tex);
     },
 
     updateBg () {

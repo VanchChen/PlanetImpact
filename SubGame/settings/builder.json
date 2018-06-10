@@ -9,7 +9,7 @@
   "inlineSpriteFrames": true,
   "inlineSpriteFrames_native": true,
   "jailbreakPlatform": false,
-  "md5Cache": false,
+  "md5Cache": true,
   "mergeStartScene": false,
   "oauthLoginServer": "",
   "optimizeHotUpdate": false,
@@ -19,20 +19,23 @@
     "portrait": false,
     "upsideDown": false
   },
-  "packageName": "org.cocos2d.PlanetImpact",
+  "packageName": "org.cocos2d.helloworld",
   "privateKey": "",
   "qqplay": {
+    "REMOTE_SERVER_ROOT": "",
     "orientation": "portrait"
   },
   "renderMode": "0",
-  "startScene": "6ad3fba3-aaa4-4b8a-bd42-5cac3230a8c6",
-  "title": "PlanetImpact",
+  "startScene": "4310f31a-7e48-409a-999c-178cc5fca562",
+  "title": "SubGame",
   "webOrientation": "auto",
   "wechatgame": {
+    "REMOTE_SERVER_ROOT": "",
     "appid": "wx6ac3f5090a6b99c5",
+    "isSubdomain": true,
     "orientation": "portrait",
-    "subContext": "sub-game"
+    "subContext": ""
   },
-  "xxteaKey": "5947e331-7d2c-4b",
+  "xxteaKey": "abe6d1b8-33e8-4e",
   "zipCompressJs": true
 }
