@@ -56,7 +56,7 @@ cc.Class({
         },
         scoreLabel: {
             default: null,
-            type: cc.Label
+            type: cc.Node
         },
         failScoreLabel: {
             default: null,
@@ -89,10 +89,6 @@ cc.Class({
         circle: {
             default: null,
             type: cc.Node
-        },
-        perfectBoomPrefab: {
-            default: null,
-            type: cc.Prefab
         },
         galaxy: {
             default: null,
@@ -247,27 +243,20 @@ cc.Class({
         if (gap < border) {
             //perfect
             this.combo++;
-            this.singleScore = this.combo * 2;
-            this.score += this.singleScore;
+            this.singleScore = this.combo * 3;
 
             this.audio.getComponents(cc.AudioSource)[4].play();
         } else {
             this.combo = 0;
-            this.singleScore = 1;
-            this.score++;
+            this.singleScore = 2;
             
             this.audio.getComponents(cc.AudioSource)[3].play();
         }
 
-        //动画
-        // var newStar = cc.instantiate(this.perfectBoomPrefab);
-        // // 将新增的节点添加到 Canvas 节点下面
-        // this.node.addChild(newStar);
-        // // 为星星设置一个随机位置
-        // newStar.setPosition(this.blackHole.position);
+        this.score += this.singleScore;
 
         //显示单次得分
-        this.singleScoreLabel.position = this.earth.position;
+        this.singleScoreLabel.position = cc.v2(this.earth.position.x, this.earth.position.y - 50);
         var scoreText = '';
         if (this.combo > 0) {
             scoreText = '完美';
@@ -275,13 +264,18 @@ cc.Class({
             scoreText = '命中';
         }
         scoreText += '  +' + this.singleScore;
-        var bounceScore = Global.bounceCount * (this.combo + 1);
+        var bounceScore = Global.bounceCount * 2 * (this.combo + 1);
         this.score += bounceScore;
         if (bounceScore > 0) {
             scoreText += '\n反弹  +' + bounceScore;
         }
         this.singleScoreLabel.getComponent(cc.Label).string = scoreText;
         this.scoreLabel.getComponent(cc.Label).string = this.score;
+
+        //动画
+        var scoreAnimation = cc.sequence(cc.scaleTo(0.1, 1.5), cc.scaleTo(0.1, 1));
+        this.scoreLabel.runAction(scoreAnimation);
+
         var showScore = cc.sequence(cc.fadeIn(0.1), cc.fadeOut(0.8));
         this.singleScoreLabel.runAction(showScore);
 
@@ -336,7 +330,6 @@ cc.Class({
 
         if (this.marsBegan || !this.mars.active) return;
 
-        console.log('fuck touch end');
         this.audio.getComponents(cc.AudioSource)[1].stop();
 
         //时间毫秒差
@@ -404,9 +397,6 @@ cc.Class({
             return;
         }
 
-        //模拟黑洞引力
-        //this.updateForce();
-
         //蓄力缩小
         if (this.touchBagan) {
             if (this.mars.width > this.minPlanetWidth) {
@@ -449,12 +439,10 @@ cc.Class({
             }
 
             let vel = this.earth.getComponent(cc.RigidBody).linearVelocity;
-            //cc.log(vel);
+            cc.log(vel);
             if (Math.abs(vel.x) <= 0.5 && Math.abs(vel.y) <= 0.5) {
                 //运动停止
                 this.earth.onContact = false;
-                cc.log('stop');
-                //do sth ..
                 var distance = this.earth.position.sub(this.blackHole.position);
                 var gap = Math.sqrt(distance.x * distance.x + distance.y * distance.y);
                 if (gap <= (this.earth.width / 2 + this.blackHole.width / 2)) {
@@ -488,17 +476,6 @@ cc.Class({
             this.bg3.setPosition(-this.bg3.width, -this.bgOffset);
             this.bg4.setPosition(-this.bg4.width, -this.bgOffset - this.bg4.height);
         }
-    },
-
-    updateForce () {
-        let marsBody = this.mars.getComponent(cc.RigidBody);
-        let earthBody = this.earth.getComponent(cc.RigidBody);
-        let holePosition = this.blackHole.getComponent(cc.RigidBody).getWorldCenter();
-
-        var force = holePosition.subSelf(marsBody.getWorldCenter()).normalizeSelf().mulSelf(this.gravityForce * marsBody.getMass());
-        marsBody.applyForceToCenter(force);
-        force = holePosition.subSelf(earthBody.getWorldCenter()).normalizeSelf().mulSelf(this.gravityForce * earthBody.getMass());
-        earthBody.applyForceToCenter(force);
     },
 
     // UI Extension:

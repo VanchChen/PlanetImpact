@@ -4144,7 +4144,7 @@
       "__id__": 17
     },
     "scoreLabel": {
-      "__id__": 33
+      "__id__": 32
     },
     "failScoreLabel": {
       "__id__": 45
@@ -4169,9 +4169,6 @@
     },
     "circle": {
       "__id__": 15
-    },
-    "perfectBoomPrefab": {
-      "__uuid__": "4f44967b-c2bf-45c1-a7de-95d1ba2f1a9c"
     },
     "galaxy": {
       "__id__": 20
