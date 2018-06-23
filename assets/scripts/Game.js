@@ -18,6 +18,7 @@ cc.Class({
     properties: {
         circleOpacity: 60,
         gravityForce: 10,
+        spriteStopRatio: 15,
         bgOffset:0,
         normalPlanetWidth:0,
         minPlanetWidth:0,
@@ -417,7 +418,7 @@ cc.Class({
         //手松开，未碰到地球的情况下，火星停止了算失败
         if (this.marsBegan && !this.earth.onContact) {
             let marsVel = this.mars.getComponent(cc.RigidBody).linearVelocity;
-            if (Math.abs(marsVel.x) <= 0.5 && Math.abs(marsVel.y) <= 0.5) {
+            if (Math.abs(marsVel.x) <= this.spriteStopRatio && Math.abs(marsVel.y) <= this.spriteStopRatio) {
                 //运动停止
                 console.log("fail1");
                 this.fail();
@@ -440,7 +441,7 @@ cc.Class({
 
             let vel = this.earth.getComponent(cc.RigidBody).linearVelocity;
             cc.log(vel);
-            if (Math.abs(vel.x) <= 0.5 && Math.abs(vel.y) <= 0.5) {
+            if (Math.abs(vel.x) <= this.spriteStopRatio && Math.abs(vel.y) <= this.spriteStopRatio) {
                 //运动停止
                 this.earth.onContact = false;
                 var distance = this.earth.position.sub(this.blackHole.position);
