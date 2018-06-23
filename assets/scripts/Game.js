@@ -176,11 +176,22 @@ cc.Class({
             holeRadius = Math.random() * this.normalPlanetWidth / 2 + this.normalPlanetWidth / 2;
         }
         this.blackHole.width = this.blackHole.height = holeRadius;
+
         //重置地球
-        var earthIndex = Math.floor(Math.random() * 3) + 1;
+        var hasFriendAch = cc.sys.localStorage.getItem('friendAchievement');
+        var hasGroupAch = cc.sys.localStorage.getItem('groupAchievement');
+        var starStorage = new Array('Earth');
+        if (hasFriendAch == 1) {
+            starStorage.push('Venus')
+        }
+        if (hasGroupAch == 1) {
+            starStorage.push('Neptune')
+        }
+
+        var earthIndex = Math.floor(Math.random() * starStorage.length);
         this.earth.active = false;	
         var self = this;
-        cc.loader.loadRes('Earth' + earthIndex, cc.SpriteFrame, function (err, spriteFrame) {	
+        cc.loader.loadRes(starStorage[earthIndex], cc.SpriteFrame, function (err, spriteFrame) {	
             self.earth.getComponent(cc.Sprite).spriteFrame = spriteFrame;	
             self.earth.active = true;	
         });
@@ -319,8 +330,13 @@ cc.Class({
     },
 
     onTouchEnd (event) {
+        if (this.loginScene.active) {
+            return;
+        }
+
         if (this.marsBegan || !this.mars.active) return;
 
+        console.log('fuck touch end');
         this.audio.getComponents(cc.AudioSource)[1].stop();
 
         //时间毫秒差
@@ -356,6 +372,11 @@ cc.Class({
             cc.sys.localStorage.setItem('notVirgin', 1);
             this.showGuideScene();
         }
+    },
+
+    back2Login () {
+        this.restart();
+        this.loginScene.active = true;
     },
 
     showGuideScene () {
