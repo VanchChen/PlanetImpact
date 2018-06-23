@@ -118,6 +118,11 @@ cc.Class({
             default: null,
             type: cc.Node
         },
+        rankScene: {
+            default: null,
+            type: cc.Node
+        },
+        rankingScrollView: cc.Sprite,
     },
 
     // LIFE-CYCLE CALLBACKS:
@@ -143,6 +148,12 @@ cc.Class({
 
         this.restart();
     },
+    
+    start () {
+        this.rankPage = 0
+        this.tex = new cc.Texture2D();
+        // this.showRankPage(this.rankPage, 6)
+    },
 
     restart () {
         this.failing = false;
@@ -156,6 +167,8 @@ cc.Class({
     },
 
     continue () {
+        this.rankPage = 0
+        this.rankScene.active = false
         this.failScene.active = false;
         this.singleScore = 0;
 
@@ -366,12 +379,59 @@ cc.Class({
     // Action:
     login () {
         this.loginScene.active = false;
+        this.rankScene.active = false;
 
         var notVirgin = cc.sys.localStorage.getItem('notVirgin');
         if (!notVirgin) {
             cc.sys.localStorage.setItem('notVirgin', 1);
             this.showGuideScene();
         }
+    },
+
+    rankTapped () {
+        console.log('rankTapped');
+        // this.failScane.active = false
+        // this.rankScane.active = true
+        // wx.postMessage({
+        //     message: 'Show',
+        //     pageSize: 6,
+        //     pageIndex: 0
+        // })
+        // this.tex = new cc.Texture2D();
+        // let openDataContext = wx.getOpenDataContext()
+        // console.log(openDataContext);
+        // openDataContext.postMessage({
+        //     text: 'hello'
+        // })
+        this.failScene.active = false
+        this.loginScene.active = false
+        this.rankScene.active = true
+        this.showRankPage('start', 6)
+    },
+
+    rankFormerTapped () {
+        this.showRankPage('former', 6)
+    },
+
+    rankLaterTapped () {
+        this.showRankPage('later', 6)
+    },
+
+    showRankPage (page, size) {
+        wx.postMessage({
+            message: 'Show',
+            pageSize: size,
+            pageType: page,
+            totalHeight: this.node.height * 0.618,
+            totalWidth: this.node.width * 2 / 3
+        })
+    },
+
+    submitScore (score){
+        wx.postMessage({
+            message: 'submit',
+            score: score
+        });
     },
 
     back2Login () {
@@ -398,6 +458,7 @@ cc.Class({
     // Update:
     update (dt) {
         this.updateBg();
+        this._updateSubDomainCanvas()
 
         //失败界面只更新背景图
         if (this.failing) {
@@ -467,6 +528,19 @@ cc.Class({
         }
     },
 
+    _updateSubDomainCanvas () {
+        // if (!this.tex) {
+        //     return;
+        // }
+        // this.tex.initWithElement(sharedCanvas);
+        // this.tex.handleLoadedTexture();
+        // this.rankDisplay.spriteFrame = new cc.SpriteFrame(this.tex);
+        console.log('sub')
+        this.tex.initWithElement(sharedCanvas);
+        this.tex.handleLoadedTexture();
+        this.rankingScrollView.spriteFrame = new cc.SpriteFrame(this.tex);
+    },
+
     updateBg () {
         let height = this.node.height;
         this.bg1.setPosition(this.bg1.position.x + 1, this.bg1.position.y + 1);
@@ -515,6 +589,9 @@ cc.Class({
         this._setViewFullScreen(this.loginScene);
         this._setViewFullScreen(this.guideScene);
         this._setViewFullScreen(this.failScene);
+        this._setViewFullScreen(this.rankScene);
+        this.rankingScrollView.width = width * 3 / 4
+        this.rankingScrollView.height = height * 0.618
 
         //适配背景
         var maxSize = Math.max(width, height);
