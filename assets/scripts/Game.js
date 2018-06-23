@@ -70,15 +70,15 @@ cc.Class({
             default: null,
             type: cc.Node
         },
-        failScane: {
+        failScene: {
             default: null,
             type: cc.Node
         },
-        loginScane: {
+        loginScene: {
             default: null,
             type: cc.Node
         },
-        guideScane: {
+        guideScene: {
             default: null,
             type: cc.Node
         },
@@ -95,6 +95,26 @@ cc.Class({
             type: cc.Prefab
         },
         galaxy: {
+            default: null,
+            type: cc.Node
+        },
+        friendRankBtn: {
+            default: null,
+            type: cc.Node
+        },
+        restartBtn: {
+            default: null,
+            type: cc.Node
+        },
+        friendBtn: {
+            default: null,
+            type: cc.Node
+        },
+        groupBtn: {
+            default: null,
+            type: cc.Node
+        },
+        questionBtn: {
             default: null,
             type: cc.Node
         },
@@ -116,7 +136,7 @@ cc.Class({
 
         //UI适配
         this._updateUI();
-        this.guideScane.active = false;
+        this.guideScene.opacity = 0;
         
         this.singleScoreLabel.setOpacity(0);
         this.circle.setOpacity(0);
@@ -136,7 +156,7 @@ cc.Class({
     },
 
     continue () {
-        this.failScane.active = false;
+        this.failScene.active = false;
         this.singleScore = 0;
 
         this.mars.active = true;
@@ -156,14 +176,14 @@ cc.Class({
             holeRadius = Math.random() * this.normalPlanetWidth / 2 + this.normalPlanetWidth / 2;
         }
         this.blackHole.width = this.blackHole.height = holeRadius;
-        //重置黑洞
-        // var holeIndex = Math.floor(Math.random() * 3) + 1;
-        // this.blackHole.active = false;	
-        // var self = this;
-        // cc.loader.loadRes('Goal' + holeIndex, cc.SpriteFrame, function (err, spriteFrame) {	
-        //     self.blackHole.getComponent(cc.Sprite).spriteFrame = spriteFrame;	
-        //     self.blackHole.active = true;	
-        // });
+        //重置地球
+        var earthIndex = Math.floor(Math.random() * 3) + 1;
+        this.earth.active = false;	
+        var self = this;
+        cc.loader.loadRes('Earth' + earthIndex, cc.SpriteFrame, function (err, spriteFrame) {	
+            self.earth.getComponent(cc.Sprite).spriteFrame = spriteFrame;	
+            self.earth.active = true;	
+        });
         
         this.mars.setPosition(Math.random() * width / 2 - width / 4, -height/3);
         this.earth.setPosition(Math.random() * width / 2 - width / 4, Math.random() * height / 4 - height / 8);
@@ -201,7 +221,7 @@ cc.Class({
 
         this.highScoreLabel.getComponent(cc.Label).string = '历史最高分：' + highScore;
 
-        this.failScane.active = true;
+        this.failScene.active = true;
         
         this.audio.getComponents(cc.AudioSource)[2].play();
         //添加触摸监听
@@ -209,7 +229,7 @@ cc.Class({
         this.node.off(cc.Node.EventType.TOUCH_MOVE, this.onTouchMove, this);
         this.node.off(cc.Node.EventType.TOUCH_CANCEL, this.onTouchEnd, this);
         this.node.off(cc.Node.EventType.TOUCH_END, this.onTouchEnd, this);
-    },//
+    },
 
     success (gap) {
         var border = Math.max(Math.abs(this.blackHole.width / 2 - this.earth.width / 2), this.earth.width / 2);
@@ -267,19 +287,19 @@ cc.Class({
 
     // Touch Event:
     onTouchBegan (event) {
-        if (this.loginScane.active) {
+        if (this.guideScene.opacity == 255) {
+            var self = this;
+            var finished = cc.callFunc(function () {
+                self.guideScene.opacity = 0;
+            }, this, 0);
+            var fadeAction = cc.sequence(cc.fadeOut(0.2), finished);
+            this.guideScene.runAction(fadeAction); 
+
+            event.stopPropagation();
             return;
         }
 
-        if (this.guideScane.active) {
-            var self = this;
-            var finished = cc.callFunc(function () {
-                self.guideScane.active = false;
-            }, this, 0);
-            var fadeAction = cc.sequence(cc.fadeOut(0.2), finished);
-            this.guideScane.runAction(fadeAction); 
-
-            event.stopPropagation();
+        if (this.loginScene.active) {
             return;
         }
 
@@ -329,13 +349,29 @@ cc.Class({
 
     // Action:
     login () {
-        this.loginScane.active = false;
+        this.loginScene.active = false;
 
         var notVirgin = cc.sys.localStorage.getItem('notVirgin');
         if (!notVirgin) {
             cc.sys.localStorage.setItem('notVirgin', 1);
-            this.guideScane.active = true;
+            this.showGuideScene();
         }
+    },
+
+    showGuideScene () {
+        this.guideScene.opacity = 255;
+    },
+
+    checkFriendRank () {
+
+    },
+
+    share2Friend () {
+
+    },
+
+    share2Group () {
+
     },
 
     // Update:
@@ -455,9 +491,9 @@ cc.Class({
         this._setBound(wallColliders[1],width/2,0,3,height);
 
         //适配三种场景
-        this._setViewFullScreen(this.loginScane);
-        this._setViewFullScreen(this.guideScane);
-        this._setViewFullScreen(this.failScane);
+        this._setViewFullScreen(this.loginScene);
+        this._setViewFullScreen(this.guideScene);
+        this._setViewFullScreen(this.failScene);
 
         //适配背景
         var maxSize = Math.max(width, height);
@@ -481,6 +517,17 @@ cc.Class({
         this._setFrame(this.circle, 0, 0, this.normalPlanetWidth, this.normalPlanetWidth);
         this.mars.getComponent(cc.PhysicsCircleCollider).radius = this.normalPlanetWidth / 2;
         this.earth.getComponent(cc.PhysicsCircleCollider).radius = this.normalPlanetWidth / 2;
+
+        //适配失败页面
+        this.restartBtn.width = width / 2;
+        this.restartBtn.height = this.restartBtn.width * 152 / 500;
+        this.restartBtn.x = 0;
+        this.restartBtn.y = 0;
+        var node = this.restartBtn;
+        this._setFrame(this.friendBtn, node.x, node.y - node.height - 20, node.width, node.height);
+        this._setFrame(this.friendRankBtn, node.x, node.y + node.height + 10, node.width, node.height);
+        node = this.friendBtn;
+        this._setFrame(this.groupBtn, node.x, node.y - node.height - 20, node.width, node.height);
     },
 
     _setBound (node,x, y, width, height) {

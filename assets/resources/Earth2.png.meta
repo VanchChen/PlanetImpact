@@ -1,14 +1,14 @@
 {
   "ver": "1.0.0",
-  "uuid": "8fbd659a-8e14-4d66-96f9-d813282d79e5",
+  "uuid": "af2c9ec6-c023-44d8-bc0f-707948498752",
   "type": "sprite",
   "wrapMode": "clamp",
   "filterMode": "bilinear",
   "subMetas": {
-    "Goal2": {
+    "Earth2": {
       "ver": "1.0.3",
-      "uuid": "72d2e787-e819-469c-9389-072cf55a6845",
-      "rawTextureUuid": "8fbd659a-8e14-4d66-96f9-d813282d79e5",
+      "uuid": "d8c7c64f-bcf2-48c0-baed-569047260b04",
+      "rawTextureUuid": "af2c9ec6-c023-44d8-bc0f-707948498752",
       "trimType": "auto",
       "trimThreshold": 1,
       "rotated": false,
@@ -16,10 +16,10 @@
       "offsetY": 0,
       "trimX": 0,
       "trimY": 0,
-      "width": 1542,
-      "height": 1500,
-      "rawWidth": 1542,
-      "rawHeight": 1500,
+      "width": 200,
+      "height": 200,
+      "rawWidth": 200,
+      "rawHeight": 200,
       "borderTop": 0,
       "borderBottom": 0,
       "borderLeft": 0,
