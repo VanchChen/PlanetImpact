@@ -5349,6 +5349,7 @@
     "_enabled": true,
     "circleOpacity": 60,
     "gravityForce": 10,
+    "spriteStopRatio": 15,
     "bgOffset": 0,
     "normalPlanetWidth": 0,
     "minPlanetWidth": 0,
