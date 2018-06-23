@@ -139,6 +139,24 @@ cc.Class({
         });
     },
 
+    fetchGroupData()
+    {
+        //取出所有群数据
+        wx.getGroupCloudStorage({
+            keyList:[
+                "HighScore",
+            ],
+            success:res => {
+                console.log("wx.getGroupCloudStorage success", res);
+                this.dataArray = res.data
+                this._show();
+            },
+            fail:res => {
+                console.log("wx.getGroupCloudStorage fail", res);
+            },
+        });
+    },
+
     submitScore(score) { //提交得分
         wx.setUserCloudStorage({
             KVDataList: [{key: "HighScore", value: "" + score}],
@@ -153,49 +171,4 @@ cc.Class({
             }
         });
     },
-    // update: function(dt) {
-    //     this.updateTimer += dt;
-    //     if (this.updateTimer < this.updateInterval) {
-    //         return; // we don't need to do the math every frame
-    //     }
-    //     this.updateTimer = 0;
-    //     let items = this.items;
-    //     // 如果当前content的y坐标小于上次记录值，则代表往下滚动，否则往上。
-    //     let isDown = this.scrollView.content.y < this.lastContentPosY;
-    //     // 实际创建项占了多高（即它们的高度累加）
-    //     let offset = this.itemTemplate.height * items.length;
-    //     let newY = 0;
-
-    //     // 遍历数组，更新item的位置和显示
-    //     for (let i = 0; i < items.length; ++i) {
-    //         let viewPos = this.getPositionInView(items[i]);
-    //         if (isDown) {
-    //             // 提前计算出该item的新的y坐标
-    //             newY = items[i].y + offset;
-    //             // 如果往下滚动时item已经超出缓冲矩形，且newY未超出content上边界，
-    //             // 则更新item的坐标（即上移了一个offset的位置），同时更新item的显示内容
-    //             if (viewPos.y < -this.bufferZone && newY < 0) {
-    //                 items[i].setPositionY(newY);
-    //                 let item = items[i].getComponent('Item');
-    //                 let itemId = item.itemID - items.length; // update item id
-    //                 item.updateItem(i, itemId);
-    //             }
-    //         } else {
-    //             // 提前计算出该item的新的y坐标
-    //             newY = items[i].y - offset;
-    //             // 如果往上滚动时item已经超出缓冲矩形，且newY未超出content下边界，
-    //             // 则更新item的坐标（即下移了一个offset的位置），同时更新item的显示内容
-    //             if (viewPos.y > this.bufferZone && newY > -this.content.height) {
-    //                 items[i].setPositionY(newY);
-    //                 let item = items[i].getComponent('Item');
-    //                 let itemId = item.itemID + items.length;
-    //                 item.updateItem(i, itemId);
-    //             }
-    //         }
-    //     }
-
-    //     // // 更新lastContentPosY和总项数显示
-    //     // this.lastContentPosY = this.scrollView.content.y;
-    //     // this.lblTotalItems.string = "Total Items: " + this.totalCount;
-    // },
 });

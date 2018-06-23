@@ -145,11 +145,38 @@ cc.Class({
 
         this.restart();
     },
+
+    onShow() {
+        print('on show')
+        wx.onShow(showApp)
+    },
+
+    showApp(res) {
+        print(res)
+    },
     
     start () {
         this.rankPage = 0
         this.tex = new cc.Texture2D();
+        wx.showShareMenu({withShareTicket:true})
         // this.showRankPage(this.rankPage, 6)
+    },
+
+    configureShare () {
+        cc.loader.loadRes("assets/resouces/share.png",function(err,data){
+            wx.onShareAppMessage(function(res){
+                return {
+                    title: "经典打飞机游戏始终好玩如初，来吧！一起回味经典的乐趣。",
+                    imageUrl: data.url,
+                    success(res){
+                        console.log(res)
+                    },
+                    fail(res){
+                        console.log(res)
+                    } 
+                }
+            })
+        }); 
     },
 
     restart () {
