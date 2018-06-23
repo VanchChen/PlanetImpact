@@ -317,7 +317,7 @@ cc.Class({
             return;
         }
 
-        if (this.loginScene.active) {
+        if (this.loginScene.active || this.rankScene.active) {
             return;
         }
 
@@ -337,7 +337,7 @@ cc.Class({
     },
 
     onTouchEnd (event) {
-        if (this.loginScene.active) {
+        if (this.loginScene.active || this.rankScene.active) {
             return;
         }
 
