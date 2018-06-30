@@ -119,7 +119,10 @@ cc.Class({
             default: null,
             type: cc.Node
         },
-        rankingScrollView: cc.Sprite,
+        rankingScrollView: {
+            default: null,
+            type: cc.Node
+        },
     },
 
     // LIFE-CYCLE CALLBACKS:
@@ -282,6 +285,8 @@ cc.Class({
         highScore = Math.max(highScore, this.score);
         cc.sys.localStorage.setItem('highScore', highScore);
 
+        this.submitScore(highScore);
+
         this.highScoreLabel.getComponent(cc.Label).string = '历史最高分：' + highScore;
 
         this.failScene.active = true;
@@ -360,7 +365,7 @@ cc.Class({
             return;
         }
 
-        if (this.loginScene.active) {
+        if (this.loginScene.active || this.rankScene.active) {
             return;
         }
 
@@ -454,18 +459,24 @@ cc.Class({
     },
 
     showRankPage (page, size) {
+        console.log(cc.game.canvas.width, cc.game.canvas.height);
+
+        sharedCanvas.width =  cc.game.canvas.width * 0.75;
+        sharedCanvas.height =  cc.game.canvas.height * 0.55;
+        console.log(sharedCanvas.width, sharedCanvas.height);
         wx.postMessage({
             message: 'Show',
             pageSize: size,
             pageType: page,
-            totalHeight: this.node.height * 0.618,
-            totalWidth: this.node.width * 2 / 3
+            totalHeight: sharedCanvas.height,
+            totalWidth: sharedCanvas.width
         })
+        this._updateSubDomainCanvas();
     },
 
     submitScore (score){
         wx.postMessage({
-            message: 'submit',
+            message: 'Submit',
             score: score
         });
     },
@@ -494,7 +505,7 @@ cc.Class({
     // Update:
     update (dt) {
         this.updateBg();
-        this._updateSubDomainCanvas()
+        //this._updateSubDomainCanvas()
 
         //失败界面只更新背景图
         if (this.failing) {
@@ -566,10 +577,11 @@ cc.Class({
         // this.tex.initWithElement(sharedCanvas);
         // this.tex.handleLoadedTexture();
         // this.rankDisplay.spriteFrame = new cc.SpriteFrame(this.tex);
-       // console.log('sub')
         this.tex.initWithElement(sharedCanvas);
         this.tex.handleLoadedTexture();
-        this.rankingScrollView.spriteFrame = new cc.SpriteFrame(this.tex);
+        this.rankingScrollView.getComponent(cc.Sprite).spriteFrame = new cc.SpriteFrame(this.tex);
+        
+        //console.log(this.tex);
     },
 
     updateBg () {
@@ -610,8 +622,10 @@ cc.Class({
         this._setViewFullScreen(this.guideScene);
         this._setViewFullScreen(this.failScene);
         this._setViewFullScreen(this.rankScene);
-        this.rankingScrollView.width = width * 3 / 4
-        this.rankingScrollView.height = height * 0.618
+
+        this.rankingScrollView.width = width * 0.75;
+        this.rankingScrollView.height = height * 0.55;
+        this.rankingScrollView.position = cc.v2(0,20);
 
         //适配背景
         var maxSize = Math.max(width, height);
