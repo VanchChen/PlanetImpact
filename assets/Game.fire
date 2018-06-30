@@ -1785,7 +1785,7 @@
     "_position": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": -350
+      "y": -370
     },
     "_skewX": 0,
     "_skewY": 0,
@@ -1911,7 +1911,7 @@
     "_left": 0,
     "_right": 0,
     "_top": 0,
-    "_bottom": 100,
+    "_bottom": 80,
     "_verticalCenter": 0,
     "_horizontalCenter": 0,
     "_isAbsLeft": true,
@@ -2163,7 +2163,7 @@
     "_position": {
       "__type__": "cc.Vec2",
       "x": -100,
-      "y": -274
+      "y": -310
     },
     "_skewX": 0,
     "_skewY": 0,
@@ -2355,11 +2355,11 @@
     "_enabled": true,
     "isAlignOnce": true,
     "_target": null,
-    "_alignFlags": 16,
+    "_alignFlags": 20,
     "_left": 0,
     "_right": 0,
     "_top": 0,
-    "_bottom": 0,
+    "_bottom": 150,
     "_verticalCenter": 0,
     "_horizontalCenter": -100,
     "_isAbsLeft": true,
@@ -2424,7 +2424,7 @@
     "_position": {
       "__type__": "cc.Vec2",
       "x": 100,
-      "y": -274
+      "y": -310
     },
     "_skewX": 0,
     "_skewY": 0,
@@ -2616,11 +2616,11 @@
     "_enabled": true,
     "isAlignOnce": true,
     "_target": null,
-    "_alignFlags": 16,
+    "_alignFlags": 20,
     "_left": 0,
     "_right": 0,
     "_top": 0,
-    "_bottom": 0,
+    "_bottom": 150,
     "_verticalCenter": 0,
     "_horizontalCenter": 100,
     "_isAbsLeft": true,
@@ -4683,7 +4683,7 @@
       }
     ],
     "_N$interactable": true,
-    "_N$enableAutoGrayEffect": false,
+    "_N$enableAutoGrayEffect": true,
     "_N$normalColor": {
       "__type__": "cc.Color",
       "r": 255,
@@ -4858,7 +4858,7 @@
       }
     ],
     "_N$interactable": true,
-    "_N$enableAutoGrayEffect": false,
+    "_N$enableAutoGrayEffect": true,
     "_N$normalColor": {
       "__type__": "cc.Color",
       "r": 255,
@@ -5475,6 +5475,12 @@
     },
     "rankingScrollView": {
       "__id__": 44
+    },
+    "startBtn": {
+      "__id__": 126
+    },
+    "loginFriendBtn": {
+      "__id__": 119
     }
   }
 ]

@@ -123,6 +123,14 @@ cc.Class({
             default: null,
             type: cc.Node
         },
+        startBtn: {
+            default: null,
+            type: cc.Node
+        },
+        loginFriendBtn: {
+            default: null,
+            type: cc.Node
+        },
     },
 
     // LIFE-CYCLE CALLBACKS:
@@ -165,36 +173,24 @@ cc.Class({
     start () {
         console.log('start');
         this.rankPage = 0
-        this.tex = new cc.Texture2D();
-        wx.showShareMenu({withShareTicket:true});
-        // this.showRankPage(this.rankPage, 6)
 
-        wx.onShareAppMessage(function(res){
-            return {
-                title: '弹弹弹！嗖嗖嗖！',
-                imageUrl: "res/raw-assets/resources/Share.png",
-                success(res){
-                    console.log(res)
-                },
-                fail(res){
-                    console.log(res)
-                } 
-            }
-        });
-    },
+        if (CC_WECHATGAME) {
+            this.tex = new cc.Texture2D();
+            wx.showShareMenu({withShareTicket:true});
 
-    configureShare () {
-        wx.shareAppMessage({
-            title: '弹弹弹！嗖嗖嗖！',
-            imageUrl: "res/raw-assets/resources/Share.png",
-            success(res){
-                console.log(res)
-                cc.sys.localStorage.setItem('friendAchievement', 1);
-            },
-            fail(res){
-                console.log(res)
-            } 
-        })
+            wx.onShareAppMessage(function(res){
+                return {
+                    title: '弹弹弹！嗖嗖嗖！好玩上瘾的游戏，推荐给你！',
+                    imageUrl: "res/raw-assets/resources/Share.png",
+                    success(res){
+                        console.log(res)
+                    },
+                    fail(res){
+                        console.log(res)
+                    } 
+                }
+            });
+        }
     },
 
     restart () {
@@ -357,6 +353,8 @@ cc.Class({
             var self = this;
             var finished = cc.callFunc(function () {
                 self.guideScene.opacity = 0;
+                this.startBtn.active = true;
+                this.loginFriendBtn.active = true;
             }, this, 0);
             var fadeAction = cc.sequence(cc.fadeOut(0.2), finished);
             this.guideScene.runAction(fadeAction); 
@@ -385,7 +383,7 @@ cc.Class({
     },
 
     onTouchEnd (event) {
-        if (this.loginScene.active) {
+        if (this.loginScene.active || this.rankScene.active || this.guideScene.opacity == 255) {
             return;
         }
 
@@ -459,26 +457,27 @@ cc.Class({
     },
 
     showRankPage (page, size) {
-        console.log(cc.game.canvas.width, cc.game.canvas.height);
+        if (CC_WECHATGAME) {
+            sharedCanvas.width =  cc.game.canvas.width * 0.75;
+            sharedCanvas.height =  cc.game.canvas.height * 0.6;
 
-        sharedCanvas.width =  cc.game.canvas.width * 0.75;
-        sharedCanvas.height =  cc.game.canvas.height * 0.55;
-        console.log(sharedCanvas.width, sharedCanvas.height);
-        wx.postMessage({
-            message: 'Show',
-            pageSize: size,
-            pageType: page,
-            totalHeight: sharedCanvas.height,
-            totalWidth: sharedCanvas.width
-        })
-        this._updateSubDomainCanvas();
+            wx.postMessage({
+                message: 'Show',
+                pageSize: size,
+                pageType: page,
+                totalHeight: sharedCanvas.height,
+                totalWidth: sharedCanvas.width
+            })
+        }
     },
 
-    submitScore (score){
-        wx.postMessage({
-            message: 'Submit',
-            score: score
-        });
+    submitScore (score) {
+        if (CC_WECHATGAME) {
+            wx.postMessage({
+                message: 'Submit',
+                score: score
+            });
+        }
     },
 
     back2Login () {
@@ -488,6 +487,8 @@ cc.Class({
 
     showGuideScene () {
         this.guideScene.opacity = 255;
+        this.startBtn.active = false;
+        this.loginFriendBtn.active = false;
     },
 
     checkFriendRank () {
@@ -495,17 +496,42 @@ cc.Class({
     },
 
     share2Friend () {
-        this.configureShare();
+        wx.shareAppMessage({
+            title: '弹弹弹！嗖嗖嗖！好玩上瘾的游戏，推荐给你！',
+            imageUrl: "res/raw-assets/resources/Share.png",
+            success(res){
+                console.log(res)
+                cc.sys.localStorage.setItem('friendAchievement', 1);
+            },
+            fail(res){
+                console.log(res)
+            } 
+        })
     },
 
     share2Group () {
-
+        wx.shareAppMessage({
+            title: '弹弹弹！嗖嗖嗖！好玩上瘾的游戏，推荐给你！',
+            imageUrl: "res/raw-assets/resources/Share.png",
+            success(res){
+                console.log(res)
+                cc.sys.localStorage.setItem('groupAchievement', 1);
+            },
+            fail(res){
+                console.log(res)
+            } 
+        })
     },
 
     // Update:
     update (dt) {
         this.updateBg();
-        //this._updateSubDomainCanvas()
+
+        if (this.rankScene.active) {
+            this._updateSubDomainCanvas();
+
+            return;
+        }
 
         //失败界面只更新背景图
         if (this.failing) {
@@ -550,7 +576,9 @@ cc.Class({
 
                 this.audio.getComponents(cc.AudioSource)[0].play();
 
-                wx.vibrateShort();
+                if (CC_WECHATGAME) {
+                    wx.vibrateShort();
+                }
             }
 
             let vel = this.earth.getComponent(cc.RigidBody).linearVelocity;
@@ -571,17 +599,11 @@ cc.Class({
     },
 
     _updateSubDomainCanvas () {
-        // if (!this.tex) {
-        //     return;
-        // }
-        // this.tex.initWithElement(sharedCanvas);
-        // this.tex.handleLoadedTexture();
-        // this.rankDisplay.spriteFrame = new cc.SpriteFrame(this.tex);
-        this.tex.initWithElement(sharedCanvas);
-        this.tex.handleLoadedTexture();
-        this.rankingScrollView.getComponent(cc.Sprite).spriteFrame = new cc.SpriteFrame(this.tex);
-        
-        //console.log(this.tex);
+        if (CC_WECHATGAME) {
+            this.tex.initWithElement(sharedCanvas);
+            this.tex.handleLoadedTexture();
+            this.rankingScrollView.getComponent(cc.Sprite).spriteFrame = new cc.SpriteFrame(this.tex);
+        }
     },
 
     updateBg () {
@@ -624,7 +646,7 @@ cc.Class({
         this._setViewFullScreen(this.rankScene);
 
         this.rankingScrollView.width = width * 0.75;
-        this.rankingScrollView.height = height * 0.55;
+        this.rankingScrollView.height = height * 0.6;
         this.rankingScrollView.position = cc.v2(0,20);
 
         //适配背景
