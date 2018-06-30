@@ -147,36 +147,51 @@ cc.Class({
     },
 
     onShow() {
-        print('on show')
-        wx.onShow(showApp)
+        console.log('on show');
+        //wx.onShow(showApp)
     },
 
-    showApp(res) {
-        print(res)
+    onShown () {
+        console.log('on shown');
     },
+
+    // showApp(res) {
+    //     print(res)
+    // },
     
     start () {
+        console.log('start');
         this.rankPage = 0
         this.tex = new cc.Texture2D();
-        wx.showShareMenu({withShareTicket:true})
+        wx.showShareMenu({withShareTicket:true});
         // this.showRankPage(this.rankPage, 6)
+
+        wx.onShareAppMessage(function(res){
+            return {
+                title: '弹弹弹！嗖嗖嗖！',
+                imageUrl: "res/raw-assets/resources/Share.png",
+                success(res){
+                    console.log(res)
+                },
+                fail(res){
+                    console.log(res)
+                } 
+            }
+        });
     },
 
     configureShare () {
-        cc.loader.loadRes("assets/resouces/share.png",function(err,data){
-            wx.onShareAppMessage(function(res){
-                return {
-                    title: "经典打飞机游戏始终好玩如初，来吧！一起回味经典的乐趣。",
-                    imageUrl: data.url,
-                    success(res){
-                        console.log(res)
-                    },
-                    fail(res){
-                        console.log(res)
-                    } 
-                }
-            })
-        }); 
+        wx.shareAppMessage({
+            title: '弹弹弹！嗖嗖嗖！',
+            imageUrl: "res/raw-assets/resources/Share.png",
+            success(res){
+                console.log(res)
+                cc.sys.localStorage.setItem('friendAchievement', 1);
+            },
+            fail(res){
+                console.log(res)
+            } 
+        })
     },
 
     restart () {
@@ -469,7 +484,7 @@ cc.Class({
     },
 
     share2Friend () {
-
+        this.configureShare();
     },
 
     share2Group () {
@@ -551,7 +566,7 @@ cc.Class({
         // this.tex.initWithElement(sharedCanvas);
         // this.tex.handleLoadedTexture();
         // this.rankDisplay.spriteFrame = new cc.SpriteFrame(this.tex);
-        console.log('sub')
+       // console.log('sub')
         this.tex.initWithElement(sharedCanvas);
         this.tex.handleLoadedTexture();
         this.rankingScrollView.spriteFrame = new cc.SpriteFrame(this.tex);
