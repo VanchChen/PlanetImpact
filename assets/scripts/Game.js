@@ -389,6 +389,8 @@ cc.Class({
 
         if (this.marsBegan || !this.mars.active) return;
 
+        if (typeof(this.touchTime) == "undefined") return;
+
         this.audio.getComponents(cc.AudioSource)[1].stop();
 
         //时间毫秒差
