@@ -27,7 +27,9 @@ cc.Class({
             Global.bounceCount++;
             if (selfCollider.tag == 5) {
                 //地球撞击
-                wx.vibrateShort();
+                if (CC_WECHATGAME) {
+                    wx.vibrateShort();
+                }
             }
         }
     },

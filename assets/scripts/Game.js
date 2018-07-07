@@ -131,6 +131,10 @@ cc.Class({
             default: null,
             type: cc.Node
         },
+        sentinel: {
+            default: null,
+            type: cc.Node
+        },
     },
 
     // LIFE-CYCLE CALLBACKS:
@@ -142,7 +146,7 @@ cc.Class({
     onLoad () {
         cc.director.getCollisionManager().enabled = true;
         cc.director.getPhysicsManager().enabled = true;
-        // 去除重力
+        //去除重力
         cc.director.getPhysicsManager().gravity = cc.v2();
         //常数设置
         this._setConstNum();
@@ -150,6 +154,7 @@ cc.Class({
         //UI适配
         this._updateUI();
         this.guideScene.opacity = 0;
+        this.sentinel.getComponent('Sentinel').disappear();
         
         this.singleScoreLabel.setOpacity(0);
         this.circle.setOpacity(0);
@@ -379,7 +384,26 @@ cc.Class({
     },
 
     onTouchMove (event) {
-        this.circle.setPosition(this.node.convertToNodeSpaceAR(cc.v2(event.touch.getLocation())));
+        var touchPosition = cc.v2(event.touch.getLocation());
+        this.circle.setPosition(this.node.convertToNodeSpaceAR(touchPosition));
+
+        // console.log(touchPosition);
+        // if (this.sentinel.active == false) {
+        //     this.sentinel.getComponent('Sentinel').appear();
+        // }
+        // //去除之前的球
+        // let rigidBody = this.sentinel.getComponent(cc.RigidBody);
+        // rigidBody.linearVelocity = cc.v2(0,0);
+
+        // //发新的球
+        // this.sentinel.setPosition(this.mars.position);
+        // let center = rigidBody.getWorldCenter();
+        // //计算方向向量
+        // var vel = touchPosition.sub(center).normalizeSelf();
+        // //乘以质量和最大初速度
+        // vel = vel.mulSelf(100000000);
+        // //实施动量
+        // rigidBody.applyLinearImpulse(vel,rigidBody.getWorldCenter(),true);
     },
 
     onTouchEnd (event) {
@@ -392,6 +416,11 @@ cc.Class({
         if (typeof(this.touchTime) == "undefined") return;
 
         this.audio.getComponents(cc.AudioSource)[1].stop();
+
+        //去除哨兵
+        // console.log(this.sentinel);
+        // this.sentinel.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
+        // this.sentinel.getComponent('Sentinel').disappear();
 
         //时间毫秒差
         var diffTime = (new Date().getTime() - this.touchTime.getTime());
@@ -584,7 +613,7 @@ cc.Class({
             }
 
             let vel = this.earth.getComponent(cc.RigidBody).linearVelocity;
-            cc.log(vel);
+            //cc.log(vel);
             if (Math.abs(vel.x) <= this.spriteStopRatio && Math.abs(vel.y) <= this.spriteStopRatio) {
                 //运动停止
                 this.earth.onContact = false;
