@@ -131,6 +131,12 @@ cc.Class({
             default: null,
             type: cc.Node
         },
+        libraryScene: {
+            default: null,
+            type: cc.Node
+        },
+        libraryScrollView: cc.ScrollView,
+        libraryItem: cc.Node,
     },
 
     // LIFE-CYCLE CALLBACKS:
@@ -153,6 +159,8 @@ cc.Class({
         
         this.singleScoreLabel.setOpacity(0);
         this.circle.setOpacity(0);
+
+        this.saveEvent(this.loadEvent())
 
         this.restart();
     },
@@ -199,6 +207,15 @@ cc.Class({
         //clear score
         this.score = 0;
         this.combo = 0;
+        let libraryData = this.loadEvent()
+        for (var i = 0; i < libraryData.length; ++ i) {
+            let libraryObject = libraryData[i]
+            if (libraryObject.name == "单局反弹") {
+                if (libraryObject.progress < libraryObject.target) {
+                    this.setEventCount("单局反弹", 0)
+                }
+            }
+        }
         this.scoreLabel.getComponent(cc.Label).string = this.score;
 
         this.continue();
@@ -207,6 +224,7 @@ cc.Class({
     continue () {
         this.rankPage = 0
         this.rankScene.active = false
+        this.libraryScene.active = false
         this.failScene.active = false;
         this.singleScore = 0;
 
@@ -232,11 +250,18 @@ cc.Class({
         var hasFriendAch = cc.sys.localStorage.getItem('friendAchievement');
         var hasGroupAch = cc.sys.localStorage.getItem('groupAchievement');
         var starStorage = new Array('Earth');
-        if (hasFriendAch == 1) {
-            starStorage.push('Venus')
-        }
-        if (hasGroupAch == 1) {
-            starStorage.push('Neptune')
+        // if (hasFriendAch == 1) {
+        //     starStorage.push('Venus')
+        // }
+        // if (hasGroupAch == 1) {
+        //     starStorage.push('Neptune')
+        // }
+        let libraryData = this.loadEvent()
+        for (var i = 0; i < libraryData.length; ++ i) {
+            let libraryObject = libraryData[i]
+            if (libraryObject.progress >= libraryObject.target) {
+                starStorage.push(libraryObject.starImage)
+            }
         }
 
         var earthIndex = Math.floor(Math.random() * starStorage.length);
@@ -277,9 +302,10 @@ cc.Class({
 
         this.failScoreLabel.getComponent(cc.Label).string = this.score;
 
-        var highScore = cc.sys.localStorage.getItem('highScore');
+        var highScore = cc.sys.localStorage.getItem('hiScore');
         highScore = Math.max(highScore, this.score);
-        cc.sys.localStorage.setItem('highScore', highScore);
+        this.setEventCount("历史最高", highScore)
+        cc.sys.localStorage.setItem('hiScore', highScore);
 
         this.submitScore(highScore);
 
@@ -325,6 +351,7 @@ cc.Class({
         this.score += bounceScore;
         if (bounceScore > 0) {
             scoreText += '\n反弹  +' + bounceScore;
+            this.setEventCount("单局反弹")
         }
         this.singleScoreLabel.getComponent(cc.Label).string = scoreText;
         this.scoreLabel.getComponent(cc.Label).string = this.score;
@@ -421,6 +448,8 @@ cc.Class({
     login () {
         this.loginScene.active = false;
         this.rankScene.active = false;
+        this.libraryScene.active = false
+        // this.showLibraryScene()
 
         var notVirgin = cc.sys.localStorage.getItem('notVirgin');
         if (!notVirgin) {
@@ -446,6 +475,7 @@ cc.Class({
         // })
         this.failScene.active = false
         this.loginScene.active = false
+        this.libraryScene.active = false
         this.rankScene.active = true
         this.showRankPage('start', 6)
     },
@@ -487,6 +517,87 @@ cc.Class({
         this.loginScene.active = true;
     },
 
+    libraryTapped () {
+        this.showLibraryScene()
+    },
+
+    showLibraryScene() {
+        this.failScene.active = false
+        this.loginScene.active = false
+        this.rankScene.active = false
+        this.loadLibraryContents()
+        this.libraryScene.active = true
+    },
+
+    loadLibraryContents() {
+        let libraryData = this.loadEvent()
+        var contentNode = this.libraryScrollView.content;
+        contentNode.setPosition(-0.5 * this.libraryScrollView.node.width, 0.5 * this.libraryScrollView.node.height)
+        contentNode.width = this.libraryScrollView.node.width
+        contentNode.height = this.libraryScrollView.node.height
+        for (let i = 0; i < libraryData.length; ++ i) {
+            let libraryObject = libraryData[i]
+            console.log(libraryObject)
+            var item = cc.instantiate(this.libraryItem);
+            // item.parent = this.libraryScrollView.content;
+            let marginX = 60
+            item.width = 0.5 * (contentNode.width - marginX * 3)
+            item.height = item.width / 2 * 3// 0.5 * (contentNode.height - margin * 3)
+            let marginY = (contentNode.height - 2 * item.height) / 3
+            let x = marginX + Math.floor(i % 2) * (item.width + marginX) + 0.5 * item.width
+            let y = -marginY - Math.floor(i / 2) * (item.height + marginY) - 0.5 * item.height
+            item.setPosition(x, y);
+            contentNode.addChild(item)
+            item.getComponent('LibraryItem').updateItem(
+                libraryObject.name, 
+                libraryObject.progress + "/" + libraryObject.target, 
+                libraryObject.starImage, 
+                libraryObject.progress >= libraryObject.target
+            )
+        }
+    },
+
+    setEventCount (name, count) {
+        var libraryData = this.loadEvent()
+        for (let i = 0; i < libraryData.length; ++ i) {
+            var libraryObject = libraryData[i]
+            if (libraryObject.name == name) {
+                if (libraryObject.progress < libraryObject.target) {
+                    if (count == null) {
+                        libraryObject.progress += 1
+                    } else {
+                        libraryObject.progress = count
+                    }
+                    // if (libraryObject.progress == libraryObject.target) {
+                    //     libraryObject.isUnlock = true
+                    // }
+                }
+                libraryData[i] = libraryObject
+                break
+            }
+        }
+        this.saveEvent(libraryData)
+    },
+
+    loadEvent() {
+        var libraryData = JSON.parse(cc.sys.localStorage.getItem('userEvent'));
+        console.log("load data: " + libraryData)
+        return libraryData
+    },
+
+    saveEvent(data) {
+        var libraryData
+        if (data == null) {
+            libraryData = [{name: "", progress: 0, target: 0, starImage: "Earth"},
+            {name: "好友挑战", progress: 0, target: 1, starImage: "Venus"},
+            {name: "查看群排行", progress: 0, target: 1, starImage: "Neptune"},
+            {name: "历史最高", progress: 0, target: 50, starImage: "Pink"}]
+        } else {
+            libraryData = data
+        }
+        cc.sys.localStorage.setItem('userEvent', JSON.stringify(libraryData));        
+    },
+
     showGuideScene () {
         this.guideScene.opacity = 255;
         this.startBtn.active = false;
@@ -504,6 +615,7 @@ cc.Class({
             success(res){
                 console.log(res)
                 cc.sys.localStorage.setItem('friendAchievement', 1);
+                this.setEventCount("好友挑战")
             },
             fail(res){
                 console.log(res)
@@ -518,6 +630,7 @@ cc.Class({
             success(res){
                 console.log(res)
                 cc.sys.localStorage.setItem('groupAchievement', 1);
+                this.setEventCount("查看群排行")
             },
             fail(res){
                 console.log(res)
@@ -646,10 +759,14 @@ cc.Class({
         this._setViewFullScreen(this.guideScene);
         this._setViewFullScreen(this.failScene);
         this._setViewFullScreen(this.rankScene);
+        this._setViewFullScreen(this.libraryScene);
 
         this.rankingScrollView.width = width * 0.75;
         this.rankingScrollView.height = height * 0.6;
         this.rankingScrollView.position = cc.v2(0,20);
+
+        this.libraryScrollView.node.width = width * 0.75;
+        this.libraryScrollView.node.height = height * 0.6;
 
         //适配背景
         var maxSize = Math.max(width, height);

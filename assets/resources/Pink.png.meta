@@ -1,14 +1,14 @@
 {
   "ver": "1.0.0",
-  "uuid": "5e9ec391-5a0e-4943-8775-4c76e614be67",
+  "uuid": "3629ebf7-cedf-456c-8d51-d978e2d91dbc",
   "type": "sprite",
   "wrapMode": "clamp",
   "filterMode": "bilinear",
   "subMetas": {
-    "Question": {
+    "Pink": {
       "ver": "1.0.3",
-      "uuid": "7a74a8d2-9024-4344-b436-db8aafd873a7",
-      "rawTextureUuid": "5e9ec391-5a0e-4943-8775-4c76e614be67",
+      "uuid": "b472f8a9-2172-478d-8d98-029e88c507b0",
+      "rawTextureUuid": "3629ebf7-cedf-456c-8d51-d978e2d91dbc",
       "trimType": "auto",
       "trimThreshold": 1,
       "rotated": false,
@@ -16,10 +16,10 @@
       "offsetY": 0,
       "trimX": 0,
       "trimY": 0,
-      "width": 40,
-      "height": 40,
-      "rawWidth": 40,
-      "rawHeight": 40,
+      "width": 200,
+      "height": 200,
+      "rawWidth": 200,
+      "rawHeight": 200,
       "borderTop": 0,
       "borderBottom": 0,
       "borderLeft": 0,

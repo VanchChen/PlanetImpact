@@ -126,7 +126,7 @@ cc.Class({
         //取出所有好友数据
         wx.getFriendCloudStorage({
             keyList:[
-                "HighScore",
+                "HiScore",
             ],
             success:res => {
                 console.log("wx.getFriendCloudStorage success", res);
@@ -144,7 +144,7 @@ cc.Class({
         //取出所有群数据
         wx.getGroupCloudStorage({
             keyList:[
-                "HighScore",
+                "HiScore",
             ],
             success:res => {
                 console.log("wx.getGroupCloudStorage success", res);
@@ -159,7 +159,7 @@ cc.Class({
 
     submitScore(score) { //提交得分
         wx.setUserCloudStorage({
-            KVDataList: [{key: "HighScore", value: "" + score}],
+            KVDataList: [{key: "HiScore", value: "" + score}],
             success: function (res) {
                 console.log('setUserCloudStorage', 'success', res)
             },

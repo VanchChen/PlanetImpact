@@ -1,14 +1,14 @@
 {
   "ver": "1.0.0",
-  "uuid": "5e9ec391-5a0e-4943-8775-4c76e614be67",
+  "uuid": "8a8c0595-066d-4b7c-aa71-a5bb7c5e2090",
   "type": "sprite",
   "wrapMode": "clamp",
   "filterMode": "bilinear",
   "subMetas": {
-    "Question": {
+    "Book": {
       "ver": "1.0.3",
-      "uuid": "7a74a8d2-9024-4344-b436-db8aafd873a7",
-      "rawTextureUuid": "5e9ec391-5a0e-4943-8775-4c76e614be67",
+      "uuid": "d9d76330-2f3f-47a4-9a6b-d58eaf3de931",
+      "rawTextureUuid": "8a8c0595-066d-4b7c-aa71-a5bb7c5e2090",
       "trimType": "auto",
       "trimThreshold": 1,
       "rotated": false,

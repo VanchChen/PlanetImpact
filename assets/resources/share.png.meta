@@ -5,7 +5,7 @@
   "wrapMode": "clamp",
   "filterMode": "bilinear",
   "subMetas": {
-    "Share": {
+    "share": {
       "ver": "1.0.3",
       "uuid": "4246228e-8ebe-4fa8-ae3a-e7a5055840e5",
       "rawTextureUuid": "350bdf96-1c90-448e-9ed9-c88094b0e856",
