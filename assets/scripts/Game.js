@@ -22,6 +22,7 @@ cc.Class({
         bgOffset:0,
         normalPlanetWidth:0,
         minPlanetWidth:0,
+        progressDirection:0,
 
         bg1: {
             default: null,
@@ -135,6 +136,10 @@ cc.Class({
             default: null,
             type: cc.Node
         },
+        powerBar: {
+            default: null,
+            type: cc.Node
+        },
     },
 
     // LIFE-CYCLE CALLBACKS:
@@ -155,6 +160,7 @@ cc.Class({
         this._updateUI();
         this.guideScene.opacity = 0;
         this.sentinel.getComponent('Sentinel').disappear();
+        this.powerBar.active = false;
         
         this.singleScoreLabel.setOpacity(0);
         this.circle.setOpacity(0);
@@ -222,14 +228,20 @@ cc.Class({
 
         //科学难度
         var holeRadius;
-        if (this.score <= 20) {
-            holeRadius = this.normalPlanetWidth * 2;
+        if (this.score <= 5) {
+            holeRadius = this.normalPlanetWidth * 3;
+        } else if (this.score <= 10) {
+            holeRadius = Math.random() * this.normalPlanetWidth / 2 + this.normalPlanetWidth * 2.5;
+        } else if (this.score <= 20) {
+            holeRadius = Math.random() * this.normalPlanetWidth / 2 + this.normalPlanetWidth * 2;
         } else if (this.score <= 50) {
             holeRadius = Math.random() * this.normalPlanetWidth / 2 + this.normalPlanetWidth * 1.5;
         } else if (this.score <= 100) {
             holeRadius = Math.random() * this.normalPlanetWidth / 2 + this.normalPlanetWidth;
-        } else {
+        } else if (this.score <= 200) {
             holeRadius = Math.random() * this.normalPlanetWidth / 2 + this.normalPlanetWidth / 2;
+        } else {
+            holeRadius = Math.random() * this.normalPlanetWidth / 10 + this.normalPlanetWidth / 5 * 2;
         }
         this.blackHole.width = this.blackHole.height = holeRadius;
 
@@ -374,16 +386,22 @@ cc.Class({
 
         if (this.marsBegan || !this.mars.active) return;
 
-        this.touchTime = new Date();
         this.audio.getComponents(cc.AudioSource)[1].play();
 
         this.touchBagan = true;
         //展示圆圈
         this.circle.setOpacity(this.circleOpacity);
+        this.powerBar.getComponent(cc.ProgressBar).progress = 0.15;
+        this.progressDirection = 0;
+
         this.onTouchMove(event);
     },
 
     onTouchMove (event) {
+        if (this.loginScene.active || this.rankScene.active || this.guideScene.opacity == 255) {
+            return;
+        }
+
         var touchPosition = cc.v2(event.touch.getLocation());
         this.circle.setPosition(this.node.convertToNodeSpaceAR(touchPosition));
 
@@ -404,6 +422,16 @@ cc.Class({
         // vel = vel.mulSelf(100000000);
         // //实施动量
         // rigidBody.applyLinearImpulse(vel,rigidBody.getWorldCenter(),true);
+
+        this.powerBar.active = true;
+        var positionX = 0;
+        var offset = this.earth.width / 2 + this.powerBar.width / 2;
+        if (this.circle.position.x > this.earth.position.x) {
+            positionX = this.earth.position.x - offset;
+        } else {
+            positionX = this.earth.position.x + offset;
+        }
+        this.powerBar.setPosition(cc.v2(positionX, this.earth.position.y));
     },
 
     onTouchEnd (event) {
@@ -413,28 +441,25 @@ cc.Class({
 
         if (this.marsBegan || !this.mars.active) return;
 
-        if (typeof(this.touchTime) == "undefined") return;
-
         this.audio.getComponents(cc.AudioSource)[1].stop();
+
+        this.powerBar.active = false;
 
         //去除哨兵
         // console.log(this.sentinel);
         // this.sentinel.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
         // this.sentinel.getComponent('Sentinel').disappear();
 
-        //时间毫秒差
-        var diffTime = (new Date().getTime() - this.touchTime.getTime());
-        diffTime = Math.min(diffTime, 3000);//最大3秒
-        diffTime = Math.max(diffTime, 500);//最小1秒
+        var progress = this.powerBar.getComponent(cc.ProgressBar).progress;
 
         let rigidBody = this.mars.getComponent(cc.RigidBody);
         let center = rigidBody.getWorldCenter();
         //计算方向向量
         var vel = cc.v2(event.touch.getLocation()).sub(center).normalizeSelf();
         //乘以质量和最大初速度
-        vel = vel.mulSelf(rigidBody.getMass() * 7000);
-        //根据时间差调整力度
-        vel = vel.mulSelf(diffTime).divSelf(3000);
+        vel = vel.mulSelf(rigidBody.getMass() * 4000);
+        //根据进度条调整力度
+        vel = vel.mulSelf(progress);
         //实施动量
         rigidBody.applyLinearImpulse(vel,rigidBody.getWorldCenter(),true);
         //motion start
@@ -575,6 +600,22 @@ cc.Class({
                 this.mars.width -= 0.3;
                 this.mars.height -= 0.3;
             }
+
+            var progress = this.powerBar.getComponent(cc.ProgressBar).progress;
+            if (this.progressDirection === 0) {
+                progress += 1 / 120;
+            } else {
+                progress -= 1 / 120;
+            }
+            if (progress >= 1) {
+                this.progressDirection = 1;
+                progress = 1;
+            }
+            if (progress <= 0.15) {
+                this.progressDirection = 0;
+                progress = 0.15;
+            }
+            this.powerBar.getComponent(cc.ProgressBar).progress = progress;
             
             return;
         }
