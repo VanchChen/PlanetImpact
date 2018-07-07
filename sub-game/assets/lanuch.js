@@ -21,23 +21,23 @@ cc.Class({
     start () {
         this.index = 0
         this.pageType = 'start'
-        wx.onMessage(data => {
-            console.log(data);
-            switch (data.message) {
-                case 'Show':
-                    this.pageSize = data.pageSize
-                    this.pageType = data.pageType
-                    this.totalHeight = data.totalHeight
-                    this.totalWidth = data.totalWidth
-                    this.fetchFriendData();
-                    console.log("show");
-                    break;
-                case 'Submit':
-                    var highScore = data.score;
-                    this.submitScore(highScore);
-                    break;
-            }
-        });
+        if (CC_WECHATGAME) {
+            wx.onMessage(data => {
+                console.log(data);
+                switch (data.message) {
+                    case 'Show':
+                        this.pageSize = data.pageSize
+                        this.pageType = data.pageType
+                        this.fetchFriendData();
+                        console.log("show");
+                        break;
+                    case 'Submit':
+                        var highScore = data.score;
+                        this.submitScore(highScore);
+                        break;
+                }
+            });
+        }
         // this.fetchFriendData()
     },
 
@@ -109,10 +109,8 @@ cc.Class({
                 item = cc.instantiate(this.itemTemplate1);
             }
             this.backView.addChild(item);
-            item.width = this.totalWidth
-            item.height = this.totalHeight / this.pageSize
-            console.log(this.totalHeight)
-            console.log(item.height)
+            item.width = this.node.width
+            item.height = this.node.height / this.pageSize
     		item.setPosition(0, ((0.5 * this.pageSize - j) - 0.5) * item.height);
             item.getComponent('Item').updateItem(i + 1, data.nickname, data.KVDataList[0].value, data.avatarUrl);
             console.log('---------------------------------')
@@ -126,7 +124,7 @@ cc.Class({
         //取出所有好友数据
         wx.getFriendCloudStorage({
             keyList:[
-                "HighScore",
+                "HiScore",
             ],
             success:res => {
                 console.log("wx.getFriendCloudStorage success", res);
@@ -144,7 +142,7 @@ cc.Class({
         //取出所有群数据
         wx.getGroupCloudStorage({
             keyList:[
-                "HighScore",
+                "HiScore",
             ],
             success:res => {
                 console.log("wx.getGroupCloudStorage success", res);
@@ -159,7 +157,7 @@ cc.Class({
 
     submitScore(score) { //提交得分
         wx.setUserCloudStorage({
-            KVDataList: [{key: "HighScore", value: "" + score}],
+            KVDataList: [{key: "HiScore", value: "" + score}],
             success: function (res) {
                 console.log('setUserCloudStorage', 'success', res)
             },
