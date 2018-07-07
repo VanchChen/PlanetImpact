@@ -102,6 +102,9 @@ cc.Class({
                 return
             }
             let data = this.dataArray[i]
+            if (data === null || data.KVDataList[0] === undefined) {
+                continue
+            }
             var item
             if (j % 2 == 0) {
                 item = cc.instantiate(this.itemTemplate0);

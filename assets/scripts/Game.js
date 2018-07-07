@@ -173,6 +173,8 @@ cc.Class({
 
         this.saveEvent(this.loadEvent())
 
+        this.loadHint()
+
         this.restart();
     },
 
@@ -264,15 +266,7 @@ cc.Class({
         this.blackHole.width = this.blackHole.height = holeRadius;
 
         //重置地球
-        var hasFriendAch = cc.sys.localStorage.getItem('friendAchievement');
-        var hasGroupAch = cc.sys.localStorage.getItem('groupAchievement');
         var starStorage = new Array('Earth');
-        // if (hasFriendAch == 1) {
-        //     starStorage.push('Venus')
-        // }
-        // if (hasGroupAch == 1) {
-        //     starStorage.push('Neptune')
-        // }
         let libraryData = this.loadEvent()
         for (var i = 0; i < libraryData.length; ++ i) {
             let libraryObject = libraryData[i]
@@ -426,7 +420,7 @@ cc.Class({
 
     onTouchMove (event) {
         if (this.loginScene.active || this.rankScene.active || 
-            this.guideScene.opacity == 255 || this.libraryScene.active) {
+            this.guideScene.opacity > 0 || this.libraryScene.active) {
             return;
         }
 
@@ -451,6 +445,9 @@ cc.Class({
         // //实施动量
         // rigidBody.applyLinearImpulse(vel,rigidBody.getWorldCenter(),true);
 
+        //火星如果已经开始动了，就不需要进度条了
+        if (this.marsBegan || !this.mars.active) return;
+
         this.powerBar.active = true;
         var positionX = 0;
         var offset = this.earth.width / 2 + this.powerBar.width / 2;
@@ -464,7 +461,7 @@ cc.Class({
 
     onTouchEnd (event) {
         if (this.loginScene.active || this.rankScene.active || 
-            this.guideScene.opacity == 255 || this.libraryScene.active) {
+            this.guideScene.opacity > 0 || this.libraryScene.active) {
             return;
         }
 
@@ -581,6 +578,9 @@ cc.Class({
         this.rankScene.active = false
         this.loadLibraryContents()
         this.libraryScene.active = true
+
+        cc.sys.localStorage.setItem('redHint', 0);
+        this.loadHint()
     },
 
     loadLibraryContents() {
@@ -594,7 +594,7 @@ cc.Class({
             console.log(libraryObject)
             var item = cc.instantiate(this.libraryItem);
             // item.parent = this.libraryScrollView.content;
-            let marginX = this.node.width / 10
+            let marginX = this.node.width / 15
             item.width = 0.5 * (contentNode.width - marginX * 3)
             item.height = item.width / 2 * 3// 0.5 * (contentNode.height - margin * 3)
             let marginY = (contentNode.height - 2 * item.height) / 3
@@ -622,9 +622,11 @@ cc.Class({
                     } else {
                         libraryObject.progress = count
                     }
-                    // if (libraryObject.progress == libraryObject.target) {
-                    //     libraryObject.isUnlock = true
-                    // }
+                    if (libraryObject.progress >= libraryObject.target) {
+                        //libraryObject.isUnlock = true
+                        cc.sys.localStorage.setItem('redHint', 1);
+                        this.loadHint();
+                    }
                 }
                 libraryData[i] = libraryObject
                 break
@@ -654,6 +656,25 @@ cc.Class({
         cc.sys.localStorage.setItem('userEvent', JSON.stringify(data));
     },
 
+    loadHint () {
+        var redHint = cc.sys.localStorage.getItem('redHint');
+        ///这段代码没用，待修复
+        if (redHint === null) {
+            cc.sys.localStorage.setItem('redHint', 1);
+            redHint = 1
+        }
+        
+        var failHint = cc.find("LibraryBtn/Hint", this.failScene);
+        var loginHint = cc.find("LibraryBtn/Hint", this.loginScene);
+        if (redHint == 1) {
+            failHint.active = true;
+            loginHint.active = true;
+        } else {
+            failHint.active = false;
+            loginHint.active = false;
+        }
+    },
+
     showGuideScene () {
         this.guideScene.opacity = 255;
         this.startBtn.active = false;
@@ -666,32 +687,30 @@ cc.Class({
 
     share2Friend () {
         wx.shareAppMessage({
-            title: '弹弹弹！嗖嗖嗖！好玩上瘾的游戏，推荐给你！',
+            title: '听说99%的人都玩不过50分！不服来战',
             imageUrl: "res/raw-assets/resources/Share.png",
             success(res){
                 console.log(res)
-                cc.sys.localStorage.setItem('friendAchievement', 1);
-                this.setEventCount("好友挑战")
             },
             fail(res){
                 console.log(res)
             } 
         })
+        this.setEventCount("好友挑战", 1)
     },
 
     share2Group () {
         wx.shareAppMessage({
-            title: '弹弹弹！嗖嗖嗖！好玩上瘾的游戏，推荐给你！',
+            title: '想不到群里射术最好的，竟然是他？！',
             imageUrl: "res/raw-assets/resources/Share.png",
             success(res){
                 console.log(res)
-                cc.sys.localStorage.setItem('groupAchievement', 1);
-                this.setEventCount("查看群排行")
             },
             fail(res){
                 console.log(res)
             } 
         })
+        this.setEventCount("查看群排行", 1)
     },
 
     // Update:
