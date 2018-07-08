@@ -686,31 +686,33 @@ cc.Class({
     },
 
     share2Friend () {
+        var self = this;
         wx.shareAppMessage({
             title: '听说99%的人都玩不过50分！不服来战',
             imageUrl: "res/raw-assets/resources/Share.png",
             success(res){
                 console.log(res)
+                self.setEventCount("好友挑战", 1)
             },
             fail(res){
                 console.log(res)
             } 
         })
-        this.setEventCount("好友挑战", 1)
     },
 
     share2Group () {
+        var self = this;
         wx.shareAppMessage({
             title: '想不到群里射术最好的，竟然是他？！',
             imageUrl: "res/raw-assets/resources/Share.png",
             success(res){
                 console.log(res)
+                self.setEventCount("查看群排行", 1)
             },
             fail(res){
                 console.log(res)
             } 
         })
-        this.setEventCount("查看群排行", 1)
     },
 
     // Update:
