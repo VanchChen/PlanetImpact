@@ -146,6 +146,12 @@ cc.Class({
         },
         libraryScrollView: cc.ScrollView,
         libraryItem: cc.Node,
+        videoAdScene: {
+            default: null,
+            type: cc.Node 
+        },
+        videoAdLabel: cc.Label,
+        videoAdProgressBar: cc.ProgressBar,
     },
 
     // LIFE-CYCLE CALLBACKS:
@@ -177,19 +183,6 @@ cc.Class({
 
         this.restart();
     },
-
-    onShow() {
-        console.log('on show');
-        //wx.onShow(showApp)
-    },
-
-    onShown () {
-        console.log('on shown');
-    },
-
-    // showApp(res) {
-    //     print(res)
-    // },
     
     start () {
         console.log('start');
@@ -239,6 +232,7 @@ cc.Class({
         this.rankScene.active = false
         this.libraryScene.active = false
         this.failScene.active = false;
+        this.videoAdScene.active = false;
         this.singleScore = 0;
 
         this.mars.active = true;
@@ -311,6 +305,21 @@ cc.Class({
         this.marsBegan = false;
         this.earth.onContact = false;
 
+        this.showFailHint();
+    },
+
+    showFailHint () {
+        this.videoAdScene.active = true;
+
+        this.videoAdLabel.string = "本次得分: " + this.score;
+        this.videoAdProgressBar.totalLength = this.videoAdScene.width * 0.8;
+        this.videoAdProgressBar.progress = 0;
+    }, 
+
+    showFail () {
+        this.videoAdScene.active = false;     
+        this.failScene.active = true;   
+
         this.failScoreLabel.getComponent(cc.Label).string = this.score;
 
         var highScore = cc.sys.localStorage.getItem('hiScore');
@@ -322,8 +331,6 @@ cc.Class({
 
         this.highScoreLabel.getComponent(cc.Label).string = '历史最高分：' + highScore;
 
-        this.failScene.active = true;
-        
         this.audio.getComponents(cc.AudioSource)[2].play();
         //添加触摸监听
         this.node.off(cc.Node.EventType.TOUCH_START, this.onTouchBegan, this);
@@ -527,6 +534,7 @@ cc.Class({
         //     text: 'hello'
         // })
         this.failScene.active = false
+        this.videoAdScene.active = false
         this.loginScene.active = false
         this.libraryScene.active = false
         this.rankScene.active = true
@@ -636,9 +644,8 @@ cc.Class({
     },
 
     loadEvent() {
-        let data = cc.sys.localStorage.getItem('userEvent').replace(/\ufeff/g,"")
+        var data = cc.sys.localStorage.getItem('userEvent')
         var libraryData = null
-        console.log('data:' + data)
         if (data === null || data.length === 0) {
             libraryData = [{name: "", progress: 0, target: 0, starImage: "Earth"},
             {name: "好友挑战", progress: 0, target: 1, starImage: "Venus"},
@@ -646,6 +653,7 @@ cc.Class({
             {name: "历史最高", progress: 0, target: 50, starImage: "Pink"}]
             cc.sys.localStorage.setItem('userEvent', JSON.stringify(libraryData));
         } else {
+            data = data.replace(/\ufeff/g,"")
             libraryData = JSON.parse(data);
         }
         //console.log("load data: " + libraryData)
@@ -687,32 +695,40 @@ cc.Class({
 
     share2Friend () {
         var self = this;
-        wx.shareAppMessage({
-            title: '听说99%的人都玩不过50分！不服来战',
-            imageUrl: "res/raw-assets/resources/Share.png",
-            success(res){
-                console.log(res)
-                self.setEventCount("好友挑战", 1)
-            },
-            fail(res){
-                console.log(res)
-            } 
-        })
+        if (CC_WECHATGAME) {
+            wx.shareAppMessage({
+                title: '听说99%的人都玩不过50分！不服来战',
+                imageUrl: "res/raw-assets/resources/Share.png",
+                success(res){
+                    console.log(res)
+                    self.setEventCount("好友挑战", 1)
+                },
+                fail(res){
+                    console.log(res)
+                } 
+            })
+        }
     },
 
     share2Group () {
         var self = this;
-        wx.shareAppMessage({
-            title: '想不到群里射术最好的，竟然是他？！',
-            imageUrl: "res/raw-assets/resources/Share.png",
-            success(res){
-                console.log(res)
-                self.setEventCount("查看群排行", 1)
-            },
-            fail(res){
-                console.log(res)
-            } 
-        })
+        if (CC_WECHATGAME) {
+            wx.shareAppMessage({
+                title: '想不到群里射术最好的，竟然是他？！',
+                imageUrl: "res/raw-assets/resources/Share.png",
+                success(res){
+                    console.log(res)
+                    self.setEventCount("查看群排行", 1)
+                },
+                fail(res){
+                    console.log(res)
+                } 
+            })
+        }
+    },
+
+    showVideoAd () {
+
     },
 
     // Update:
@@ -722,6 +738,20 @@ cc.Class({
         if (this.rankScene.active) {
             this._updateSubDomainCanvas();
 
+            return;
+        }
+
+        //如果在提示中,就开启倒计时
+        if (this.videoAdScene.active) {
+            var progress = this.videoAdProgressBar.progress;
+            if (progress < 1) {
+                progress += 1 / 180;
+                this.videoAdProgressBar.progress = progress;
+
+                if (progress >= 1) {
+                    this.showFail();
+                }
+            }
             return;
         }
 
@@ -853,6 +883,7 @@ cc.Class({
         this._setViewFullScreen(this.failScene);
         this._setViewFullScreen(this.rankScene);
         this._setViewFullScreen(this.libraryScene);
+        this._setViewFullScreen(this.videoAdScene);
 
         this.rankingScrollView.width = width * 0.75;
         this.rankingScrollView.height = height * 0.6;
