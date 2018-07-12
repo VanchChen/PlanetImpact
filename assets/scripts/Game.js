@@ -213,6 +213,9 @@ cc.Class({
         //clear score
         this.score = 0;
         this.combo = 0;
+
+        this.watchedVideoAd = false;
+
         // let libraryData = this.loadEvent()
         // for (var i = 0; i < libraryData.length; ++ i) {
         //     let libraryObject = libraryData[i]
@@ -305,7 +308,11 @@ cc.Class({
         this.marsBegan = false;
         this.earth.onContact = false;
 
-        this.showFailHint();
+        if (this.watchedVideoAd) {
+        	this.showFail();
+        } else {
+        	this.showFailHint();
+        }
     },
 
     showFailHint () {
@@ -728,7 +735,36 @@ cc.Class({
     },
 
     showVideoAd () {
+		if (!CC_WECHATGAME) {
+			return
+		}
 
+		let videoAd = wx.createRewardedVideoAd({
+		    adUnitId: 'adunit-6f73f35cdca5eb92'
+		})
+
+		let self = this
+
+		videoAd.load()
+		.then(() => {
+			videoAd.show()
+			self.videoAdScene.active = false
+		})
+		.catch(err => console.log(err.errMsg))
+
+		videoAd.onClose(res => {
+			// 小于 2.1.0 的基础库版本，res 是一个 undefined
+		    if (res && res.isEnded || res === undefined) {
+		      // 正常播放结束，可以下发游戏奖励
+		      self.failing = false
+		      self.watchedVideoAd = true
+		      self.continue()
+		    }
+		    else {
+		        // 播放中途退出，不下发游戏奖励
+		        self.showFail()
+		    }
+		})
     },
 
     // Update:
