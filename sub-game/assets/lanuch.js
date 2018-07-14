@@ -31,6 +31,12 @@ cc.Class({
                         this.fetchFriendData();
                         console.log("show");
                         break;
+                    case 'ShowGroup':
+                        this.pageSize = data.pageSize
+                        this.pageType = data.pageType
+                        this.fetchGroupData(data.shareTicket);
+                        console.log("show group");
+                        break;
                     case 'Submit':
                         var highScore = data.score;
                         this.submitScore(highScore);
@@ -140,11 +146,12 @@ cc.Class({
         });
     },
 
-    fetchGroupData()
+    fetchGroupData(shareTicket)
     {
         //取出所有群数据
         wx.getGroupCloudStorage({
-            keyList:[
+            shareTicket: shareTicket,
+            keyList: [
                 "HiScore",
             ],
             success:res => {

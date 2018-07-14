@@ -124,6 +124,7 @@ cc.Class({
             default: null,
             type: cc.Node
         },
+        rankTitleLbl: cc.Label,
         startBtn: {
             default: null,
             type: cc.Node
@@ -151,6 +152,8 @@ cc.Class({
             type: cc.Node 
         },
         videoAdLabel: cc.Label,
+        videoAdBtn: cc.Node,
+        videoNoAdBtn: cc.Node,
         videoAdProgressBar: cc.ProgressBar,
     },
 
@@ -192,11 +195,35 @@ cc.Class({
             this.tex = new cc.Texture2D();
             wx.showShareMenu({withShareTicket:true});
 
+            let self = this
+
+            wx.onShow(function (res) {
+                console.log(res);
+                console.log(res.shareTicket);
+                let shareTicket = res.shareTicket
+                if (shareTicket != null && shareTicket != undefined) {
+                    self.showRankWithShareTickets(shareTicket)
+                }
+            })
+
+            var launchOption = wx.getLaunchOptionsSync();
+            console.log("launch option")
+            console.log(launchOption)
+
+            let shareTicket = launchOption.shareTicket
+            if (shareTicket != null && shareTicket != undefined) {
+                this.showRankWithShareTickets(shareTicket)
+            }
+            // wx.getShareInfo(function(object) {
+            //     console.log(object)
+            // })
+
             wx.onShareAppMessage(function(res){
                 return {
                     title: '弹弹弹！嗖嗖嗖！好玩上瘾的游戏，推荐给你！',
                     imageUrl: "res/raw-assets/resources/Share.png",
                     success(res){
+                        console.log("hahaha")
                         console.log(res)
                     },
                     fail(res){
@@ -209,6 +236,9 @@ cc.Class({
 
     restart () {
         this.failing = false;
+        
+        this.isShowGroupRank = false
+        this.shareTicket = null
 
         //clear score
         this.score = 0;
@@ -318,9 +348,22 @@ cc.Class({
     showFailHint () {
         this.videoAdScene.active = true;
 
-        this.videoAdLabel.string = "本次得分: " + this.score;
+        let width = this.node.width;
+        this.videoAdBtn.width = width / 2;
+        this.videoAdBtn.height = this.restartBtn.width * 99 / 300;
+        this.videoAdBtn.x = 0;
+        this.videoAdBtn.y = 0;
+        this.videoNoAdBtn.x = 0;
+        this.videoNoAdBtn.y = -this.videoAdBtn.height * 0.5 - this.videoNoAdBtn.height * 0.5 - 30;
+        this.videoAdLabel.string = this.score// "本次得分: " + this.score;
         this.videoAdProgressBar.totalLength = this.videoAdScene.width * 0.8;
         this.videoAdProgressBar.progress = 0;
+
+        //添加触摸监听
+        this.node.off(cc.Node.EventType.TOUCH_START, this.onTouchBegan, this);
+        this.node.off(cc.Node.EventType.TOUCH_MOVE, this.onTouchMove, this);
+        this.node.off(cc.Node.EventType.TOUCH_CANCEL, this.onTouchEnd, this);
+        this.node.off(cc.Node.EventType.TOUCH_END, this.onTouchEnd, this);
     }, 
 
     showFail () {
@@ -561,11 +604,23 @@ cc.Class({
             sharedCanvas.width =  cc.game.canvas.width * 0.75;
             sharedCanvas.height =  cc.game.canvas.height * 0.6;
 
-            wx.postMessage({
-                message: 'Show',
-                pageSize: size,
-                pageType: page
-            })
+            if (this.isShowGroupRank && this.shareTicket != null) {
+                let self = this
+                this.rankTitleLbl.text = "群排行"
+                wx.postMessage({
+                    message: 'ShowGroup',
+                    pageSize: size,
+                    pageType: page,
+                    shareTicket: self.shareTicket
+                })
+            } else {
+                this.rankTitleLbl.text = "好友排行"
+                wx.postMessage({
+                    message: 'Show',
+                    pageSize: size,
+                    pageType: page
+                })
+            }
         }
     },
 
@@ -576,6 +631,13 @@ cc.Class({
                 score: score
             });
         }
+    },
+
+    showRankWithShareTickets(shareTicket) {
+        console.log("show rank")
+        this.isShowGroupRank = true
+        this.shareTicket = shareTicket
+        this.rankTapped()
     },
 
     back2Login () {
@@ -603,16 +665,23 @@ cc.Class({
         var contentNode = this.libraryScrollView.content;
         contentNode.setPosition(-0.5 * this.libraryScrollView.node.width, 0.5 * this.libraryScrollView.node.height)
         contentNode.width = this.libraryScrollView.node.width
-        contentNode.height = this.libraryScrollView.node.height
+
+        let contentParent = contentNode.parent
+        contentParent.height = this.libraryScrollView.node.height
+
+        let marginX = this.node.width / 15
+        let itemW = 0.5 * (contentNode.width - marginX * 3)
+        let itemH = itemW / 2 * 3
+        let marginY = (this.libraryScrollView.node.height - 2 * itemH) / 3
+
+        contentNode.height = this.libraryScrollView.node.height + Math.floor((libraryData.length - 3) / 2) * (itemH + marginY)
+
         for (let i = 0; i < libraryData.length; ++ i) {
             let libraryObject = libraryData[i]
             console.log(libraryObject)
             var item = cc.instantiate(this.libraryItem);
-            // item.parent = this.libraryScrollView.content;
-            let marginX = this.node.width / 15
-            item.width = 0.5 * (contentNode.width - marginX * 3)
-            item.height = item.width / 2 * 3// 0.5 * (contentNode.height - margin * 3)
-            let marginY = (contentNode.height - 2 * item.height) / 3
+            item.width = itemW
+            item.height = itemH
             let x = marginX + Math.floor(i % 2) * (item.width + marginX) + 0.5 * item.width
             let y = -marginY - Math.floor(i / 2) * (item.height + marginY) - 0.5 * item.height
             item.setPosition(x, y);
@@ -653,15 +722,38 @@ cc.Class({
     loadEvent() {
         var data = cc.sys.localStorage.getItem('userEvent')
         var libraryData = null
+        var oriData = [
+            {name: "", progress: 0, target: 0, starImage: "Earth", key: "none", version: "midsummer"},
+            {name: "好友挑战", progress: 0, target: 1, starImage: "Venus", key: "friend"},
+            {name: "查看群排行", progress: 0, target: 1, starImage: "Neptune", key: "group"},
+            {name: "历史最高", progress: 0, target: 50, starImage: "Pink", key: "hiscore"},
+            {name: "累计复活", progress: 0, target: 1, starImage: "DirtyPink", key: "revive"},
+        ]
         if (data === null || data.length === 0) {
-            libraryData = [{name: "", progress: 0, target: 0, starImage: "Earth"},
-            {name: "好友挑战", progress: 0, target: 1, starImage: "Venus"},
-            {name: "查看群排行", progress: 0, target: 1, starImage: "Neptune"},
-            {name: "历史最高", progress: 0, target: 50, starImage: "Pink"}]
+            libraryData = oriData
             cc.sys.localStorage.setItem('userEvent', JSON.stringify(libraryData));
         } else {
             data = data.replace(/\ufeff/g,"")
             libraryData = JSON.parse(data);
+            let version = data[0].version
+            if (version != "midsummer") {
+                for (var i = 0; i < oriData.length; ++ i) {
+                    var item = oriData[i]
+                    for (var i = 0; i < libraryData.length; ++ i) {
+                        let old = libraryData[i]
+                        if (item.name == old.name) {
+                            console.log("get old")
+                            console.log("progress: " + item.progress + " & " + old.progress)
+                            item.progress = old.progress
+                            break
+                        }
+                    }
+                    oriData[i] = item
+                }
+                console.log(oriData)
+                libraryData = oriData
+                cc.sys.localStorage.setItem('userEvent', JSON.stringify(libraryData));
+            }
         }
         //console.log("load data: " + libraryData)
         return libraryData
@@ -726,6 +818,10 @@ cc.Class({
                 success(res){
                     console.log(res)
                     self.setEventCount("查看群排行", 1)
+                    let shareTicket = res.shareTickets[0]
+                    if (shareTicket != null && shareTicket != undefined) {
+                        self.showRankWithShareTickets(shareTicket)
+                    }
                 },
                 fail(res){
                     console.log(res)
@@ -753,17 +849,19 @@ cc.Class({
 		.catch(err => console.log(err.errMsg))
 
 		videoAd.onClose(res => {
-			// 小于 2.1.0 的基础库版本，res 是一个 undefined
-		    if (res && res.isEnded || res === undefined) {
-		      // 正常播放结束，可以下发游戏奖励
-		      self.failing = false
-		      self.watchedVideoAd = true
-		      self.continue()
-		    }
-		    else {
-		        // 播放中途退出，不下发游戏奖励
-		        self.showFail()
-		    }
+            // 小于 2.1.0 的基础库版本，res 是一个 undefined
+            if (res && res.isEnded || res === undefined) {
+                // 正常播放结束，可以下发游戏奖励
+                self.failing = false
+                self.watchedVideoAd = true
+                self.setEventCount("累计复活")
+                console.log("复活+1") // fucking repeat
+                self.continue()
+            } else {
+                // 播放中途退出，不下发游戏奖励
+                self.showFail()
+                console.log("复活+0")
+            }
 		})
     },
 
@@ -781,7 +879,7 @@ cc.Class({
         if (this.videoAdScene.active) {
             var progress = this.videoAdProgressBar.progress;
             if (progress < 1) {
-                progress += 1 / 180;
+                progress += 1 / 270;
                 this.videoAdProgressBar.progress = progress;
 
                 if (progress >= 1) {
