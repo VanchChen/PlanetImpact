@@ -72,6 +72,10 @@ cc.Class({
             default: null,
             type: cc.Node
         },
+        reviveHighScoreLabel: {
+            default: null,
+            type: cc.Node
+        },
         failScene: {
             default: null,
             type: cc.Node
@@ -358,6 +362,9 @@ cc.Class({
         this.videoAdLabel.string = this.score// "本次得分: " + this.score;
         this.videoAdProgressBar.totalLength = this.videoAdScene.width * 0.8;
         this.videoAdProgressBar.progress = 0;
+        var highScore = cc.sys.localStorage.getItem('hiScore');
+        highScore = Math.max(highScore, this.score);
+        this.reviveHighScoreLabel.getComponent(cc.Label).string = '历史最高分：' + highScore;
 
         //添加触摸监听
         this.node.off(cc.Node.EventType.TOUCH_START, this.onTouchBegan, this);

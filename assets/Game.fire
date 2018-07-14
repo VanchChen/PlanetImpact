@@ -10278,6 +10278,9 @@
     "highScoreLabel": {
       "__id__": 105
     },
+    "reviveHighScoreLabel": {
+      "__id__": 259
+    },
     "failScene": {
       "__id__": 76
     },
