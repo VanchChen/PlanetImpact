@@ -162,6 +162,8 @@ cc.Class({
         libraryAlertView: cc.Node,
         libraryAlertImg: cc.Node,
         ufoNode: cc.Node,
+        guideText: cc.Node,
+        guideFinger: cc.Node,
     },
 
     // LIFE-CYCLE CALLBACKS:
@@ -278,6 +280,16 @@ cc.Class({
         this.failScene.active = false;
         this.videoAdScene.active = false;
         this.singleScore = 0;
+        if (this.isGuideMode) {
+            var finished = cc.callFunc(function () {
+                this.guideText.active = false;
+            }, this);
+            var spawn = cc.sequence(cc.fadeOut(1), finished);
+            this.guideText.runAction(spawn);
+            
+            this.guideFinger.active = false;
+        }
+        this.isGuideMode = false;
 
         this.mars.active = true;
 
@@ -345,10 +357,16 @@ cc.Class({
 
     // Logic:
     fail () {
-        // reset
-        this.failing = true;
         this.marsBegan = false;
         this.earth.onContact = false;
+
+        if (this.isGuideMode) {
+            this.guide();
+            return;
+        }
+
+        // reset
+        this.failing = true;
 
         if (this.watchedVideoAd) {
         	this.showFail();
@@ -458,6 +476,45 @@ cc.Class({
         this.earth.runAction(spawn);
     },
 
+    guide () {
+        this.singleScore = 0;
+
+        let width = this.node.width;
+        let height = this.node.height;
+
+        this.guideText.active = true;
+        this.guideFinger.active = true;
+        if (this.isGuideMode === false) {
+            //黑洞
+            this.blackHole.width = this.blackHole.height = this.normalPlanetWidth * 3;
+            //加载地球纹理
+            this.earth.active = false;	
+            var self = this;
+            cc.loader.loadRes('Earth', cc.SpriteFrame, function (err, spriteFrame) {	
+                self.earth.getComponent(cc.Sprite).spriteFrame = spriteFrame;	
+                self.earth.active = true;	
+            });
+        }
+        
+        this.isGuideMode = true;
+        
+        this.mars.setPosition(0, -height / 3);
+        this.earth.setPosition(0, -height / 15);
+        this.blackHole.setPosition(0, height / 3);
+        this.galaxy.setPosition(this.blackHole.position);
+        this.guideFinger.setPosition(this.earth.x, this.earth.y - this.earth.height / 2 - this.guideFinger.height / 2);
+        this.guideText.setPosition(0, height / 10);
+        
+        this.mars.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
+        this.earth.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
+
+        //clear bounce count
+        Global.bounceCount = 0;
+
+        //恢复火星
+        this.mars.active = true;
+    },
+
     // Touch Event:
     onTouchBegan (event) {
         if (this.guideScene.opacity == 255) {
@@ -479,6 +536,15 @@ cc.Class({
         }
 
         if (this.marsBegan || !this.mars.active) return;
+
+        if (this.isGuideMode) {
+            //点下去的时候点对了，就暂时去掉提示
+            var touchPosition = this.node.convertToNodeSpaceAR(cc.v2(event.touch.getLocation()));
+            if (touchPosition.x > this.guideFinger.x - this.guideFinger.width / 2 && touchPosition.x < this.guideFinger.x + this.guideFinger.width / 2 &&
+                touchPosition.y > this.guideFinger.y - this.guideFinger.height / 2 && touchPosition.y < this.guideFinger.y + this.guideFinger.height / 2) {
+                this.guideFinger.active = false;
+            }
+        }
 
         this.audio.getComponents(cc.AudioSource)[1].play();
 
@@ -524,7 +590,7 @@ cc.Class({
         this.powerBar.active = true;
         var positionX = 0;
         var offset = this.earth.width / 2 + this.powerBar.width / 2;
-        if (this.circle.position.x > this.earth.position.x) {
+        if (this.circle.position.x > this.earth.position.x && !this.isGuideMode) {
             positionX = this.earth.position.x - offset;
         } else {
             positionX = this.earth.position.x + offset;
@@ -574,13 +640,13 @@ cc.Class({
     login () {
         this.loginScene.active = false;
         this.rankScene.active = false;
-        this.libraryScene.active = false
+        this.libraryScene.active = false;
         // this.showLibraryScene()
 
-        var notVirgin = cc.sys.localStorage.getItem('notVirgin');
+        var notVirgin = false; //cc.sys.localStorage.getItem('notVirgin');
         if (!notVirgin) {
-            cc.sys.localStorage.setItem('notVirgin', 1);
-            this.showGuideScene();
+            //cc.sys.localStorage.setItem('notVirgin', 1);
+            this.guide();
         }
     },
 
@@ -1126,6 +1192,10 @@ cc.Class({
         this._setFrame(this.friendRankBtn, node.x, node.y + node.height + 10, node.width, node.height);
         node = this.friendBtn;
         this._setFrame(this.groupBtn, node.x, node.y - node.height - 20, node.width, node.height);
+
+        //适配教程图片
+        this.guideText.active = false;
+        this.guideFinger.active = false;
     },
 
     _setBound (node,x, y, width, height) {
