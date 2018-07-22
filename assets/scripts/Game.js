@@ -159,8 +159,10 @@ cc.Class({
         videoAdBtn: cc.Node,
         videoNoAdBtn: cc.Node,
         videoAdProgressBar: cc.ProgressBar,
-        libraryAlertView: cc.Node,
-        libraryAlertImg: cc.Node,
+        alertScene: cc.Node,
+        alertImg: cc.Node,
+        alertLbl: cc.Label,
+        alertBtn: cc.Node,
         ufoNode: cc.Node,
         guideText: cc.Node,
         guideFinger: cc.Node,
@@ -172,7 +174,7 @@ cc.Class({
         this.minPlanetWidth = this.normalPlanetWidth * 0.8;
         this.libraryAlertWaitingArray = new Array();
         this.ufoScore = 50;
-        this.ufoShowRate = 0.1;
+        this.ufoShowRate = 0.5;
     },
 
     onLoad () {
@@ -188,12 +190,19 @@ cc.Class({
         this.guideScene.opacity = 0;
         this.sentinel.getComponent('Sentinel').disappear();
         this.powerBar.active = false;
-        this.libraryAlertView.active = false;
+        this.alertScene.active = false;
+        this.ufoNode.active = false;
         
         this.singleScoreLabel.setOpacity(0);
         this.circle.setOpacity(0);
 
         this.saveEvent(this.loadEvent())
+        // for (var i = 0; i < 4; ++ i ) {
+        //     let data = this.loadEvent()
+        //     let libraryObject = data[i]
+        //     console.log(libraryObject)
+        //     this.libraryAlertWaitingArray.push(libraryObject)
+        // }
 
         this.loadHint()
 
@@ -273,6 +282,16 @@ cc.Class({
         this.continue();
     },
 
+    restartOrAlert() {
+        if (this.libraryAlertWaitingArray.length > 0) {
+            this.rankScene.active = false;  
+            this.showLibraryAlert(this.restart)
+            this.methodWaiting = this.restart
+        } else {
+            this.restart()
+        }
+    },
+
     continue () {
         this.rankPage = 0
         this.rankScene.active = false
@@ -280,6 +299,9 @@ cc.Class({
         this.failScene.active = false;
         this.videoAdScene.active = false;
         this.singleScore = 0;
+        this.ufoNode.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
+        this.ufoNode.active = false
+
         if (this.isGuideMode) {
             var finished = cc.callFunc(function () {
                 this.guideText.active = false;
@@ -314,7 +336,6 @@ cc.Class({
             holeRadius = Math.random() * this.normalPlanetWidth / 10 + this.normalPlanetWidth / 5 * 2;
         }
         this.blackHole.width = this.blackHole.height = holeRadius;
-        this.showUfo()
 
         //重置地球
         var starStorage = new Array('Earth');
@@ -338,6 +359,11 @@ cc.Class({
         this.earth.setPosition(Math.random() * width / 2 - width / 4, Math.random() * height / 4 - height / 8);
         this.blackHole.setPosition(Math.random() * width / 2 - width / 4, height / 3);
         this.galaxy.setPosition(this.blackHole.position);
+
+        this.mars.width = this.normalPlanetWidth
+        this.mars.height = this.normalPlanetWidth
+        this.earth.width = this.normalPlanetWidth
+        this.earth.height = this.normalPlanetWidth
         
         this.mars.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
         this.earth.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
@@ -347,6 +373,12 @@ cc.Class({
 
         //恢复火星
         this.mars.active = true;
+        
+        if (this.score > this.ufoScore) {
+            if (Math.random() > (1 - this.ufoShowRate)) {
+                this.showUfo();
+            }
+        }
 
         //添加触摸监听
         this.node.on(cc.Node.EventType.TOUCH_START, this.onTouchBegan, this);
@@ -369,7 +401,7 @@ cc.Class({
         this.failing = true;
 
         if (this.watchedVideoAd) {
-        	this.showFail();
+        	this.showFailOrAlert();
         } else {
         	this.showFailHint();
         }
@@ -399,10 +431,19 @@ cc.Class({
         this.node.off(cc.Node.EventType.TOUCH_END, this.onTouchEnd, this);
     }, 
 
+    showFailOrAlert() {
+        if (this.libraryAlertWaitingArray.length > 0) {
+            this.videoAdScene.active = false;  
+            this.showLibraryAlert()
+            this.methodWaiting = this.showFail
+        } else {
+            this.showFail()
+        }
+    },
+
     showFail () {
         this.videoAdScene.active = false;     
         this.failScene.active = true;
-        this.showlibraryAlert()
 
         this.failScoreLabel.getComponent(cc.Label).string = this.score;
 
@@ -457,6 +498,10 @@ cc.Class({
         }
         this.singleScoreLabel.getComponent(cc.Label).string = scoreText;
         this.scoreLabel.getComponent(cc.Label).string = this.score;
+
+        var highScore = cc.sys.localStorage.getItem('hiScore');
+        highScore = Math.max(highScore, this.score);
+        this.setEventCount("历史最高", highScore)
 
         //动画
         var scoreAnimation = cc.sequence(cc.scaleTo(0.1, 1.5), cc.scaleTo(0.1, 1));
@@ -643,9 +688,9 @@ cc.Class({
         this.libraryScene.active = false;
         // this.showLibraryScene()
 
-        var notVirgin = false; //cc.sys.localStorage.getItem('notVirgin');
+        var notVirgin = cc.sys.localStorage.getItem('notCherry');
         if (!notVirgin) {
-            //cc.sys.localStorage.setItem('notVirgin', 1);
+            cc.sys.localStorage.setItem('notCherry', 1);
             this.guide();
         }
     },
@@ -717,6 +762,9 @@ cc.Class({
 
     showRankWithShareTickets(shareTicket) {
         console.log("show rank")
+        if (shareTicket === null || shareTicket === undefined) {
+            shareTicket = this.shareTicket
+        }
         this.isShowGroupRank = true
         this.shareTicket = shareTicket
         this.rankTapped()
@@ -793,6 +841,8 @@ cc.Class({
                         cc.sys.localStorage.setItem('redHint', 1);
                         this.loadHint();
                         this.libraryAlertWaitingArray.push(libraryObject)
+                        console.log('set count')
+                        console.log(this.libraryAlertWaitingArray)
                     }
                 }
                 libraryData[i] = libraryObject
@@ -802,21 +852,29 @@ cc.Class({
         this.saveEvent(libraryData)
     },
 
-    showlibraryAlert() {
+    showLibraryAlert() {
         if (this.libraryAlertWaitingArray.length > 0) {
-            starUrl = this.libraryAlertWaitingArray[0].starImage
+            let starUrl = this.libraryAlertWaitingArray[0].starImage
             this.libraryAlertWaitingArray.splice(0, 1)
+            // this.alertLbl.string = "获得新星球！"
             var self = this;
             cc.loader.loadRes(starUrl, cc.SpriteFrame, function (err, spriteFrame) {    
-                self.libraryAlertImg.getComponent(cc.Sprite).spriteFrame = spriteFrame;
+                self.alertImg.getComponent(cc.Sprite).spriteFrame = spriteFrame;
             });
-            this.libraryAlertView.active = true
+            this.alertScene.active = true
         }
     },
 
     closeLibraryAlert() {
-        this.libraryAlertView.active = false
-        this.showlibraryAlert()
+        this.alertScene.active = false
+        if (this.libraryAlertWaitingArray.length > 0) {
+            this.showLibraryAlert()
+        } else {
+            if (this.methodWaiting != null) {
+                this.methodWaiting()
+                this.methodWaiting = null
+            }
+        }
     },
 
     loadEvent() {
@@ -842,8 +900,6 @@ cc.Class({
                     for (var i = 0; i < libraryData.length; ++ i) {
                         let old = libraryData[i]
                         if (item.name == old.name) {
-                            console.log("get old")
-                            console.log("progress: " + item.progress + " & " + old.progress)
                             item.progress = old.progress
                             break
                         }
@@ -901,6 +957,7 @@ cc.Class({
                 success(res){
                     console.log(res)
                     self.setEventCount("好友挑战", 1)
+                    self.showLibraryAlert()
                 },
                 fail(res){
                     console.log(res)
@@ -916,15 +973,18 @@ cc.Class({
                 title: '想不到群里射术最好的，竟然是他？！',
                 imageUrl: "res/raw-assets/resources/Share.png",
                 success(res){
-                    console.log(res)
                     self.setEventCount("查看群排行", 1)
                     let shareTicket = res.shareTickets[0]
+                    console.log("share to group")
                     if (shareTicket != null && shareTicket != undefined) {
-                        self.showRankWithShareTickets(shareTicket)
+                        console.log("group rank")
+                        self.shareTicket = shareTicket
+                        self.methodWaiting = self.showRankWithShareTickets
+                        self.showLibraryAlert()
+                        // self.showRankWithShareTickets(shareTicket)
                     }
                 },
                 fail(res){
-                    console.log(res)
                 } 
             })
         }
@@ -959,46 +1019,53 @@ cc.Class({
                 self.continue()
             } else {
                 // 播放中途退出，不下发游戏奖励
-                self.showFail()
+                self.showFailOrAlert()
                 console.log("复活+0")
             }
 		})
     },
 
     showUfo() {
-        if (this.score > this.ufoScore) {
-            if (Math.random() > (1 - this.ufoShowRate)) {
-                this.driveUfo()
+        let y = (Math.random() * 0.2 + 0.4) * (this.blackHole.y + this.earth.y)
+        this.ufoNode.setPosition(50, y);
+        this.ufoNode.getComponent(cc.RigidBody).linearVelocity = cc.v2(100,0);
+        this.ufoNode.active = true;
+    },
+
+    driveUfo() {
+        if (this.ufoNode.active) {
+            let width = this.node.width;
+            let rigidBody = this.ufoNode.getComponent(cc.RigidBody);
+            if (this.ufoNode.position.x > width * 0.5 - 0.5 * this.ufoNode.width - 10) {
+                this.ufoNode.getComponent(cc.RigidBody).linearVelocity = cc.v2(-100,0);
+            } else if (this.ufoNode.position.x < -width * 0.5 + 0.5 * this.ufoNode.width + 10) {
+                this.ufoNode.getComponent(cc.RigidBody).linearVelocity = cc.v2(100,0);
             }
         }
     },
 
-    driveUfo() {
-        this.ufoNode.active = true
-        let rigidBody = this.ufoNode.getComponent(cc.RigidBody);
-        let center = rigidBody.getWorldCenter();
-        var vel = cc.v2(event.touch.getLocation()).sub(center).normalizeSelf();
-        vel = vel.mulSelf(rigidBody.getMass() * 4000);
-        rigidBody.applyLinearImpulse(vel,rigidBody.getWorldCenter(),true);
-    },
-
     ufoContactDetect() {
-        var distance = this.earth.position.sub(this.ufoNode.position);
-        var gap = Math.sqrt(distance.x * distance.x + distance.y * distance.y);
-        if (gap <= (this.earth.width / 2 + this.ufoNode.width / 2)) {
-            this.ufoSuccess();
+        if (this.ufoNode.active) {
+            var distance = this.earth.position.sub(this.ufoNode.position);
+            var gap = Math.sqrt(distance.x * distance.x + distance.y * distance.y);
+            if (gap <= (this.earth.width / 2 + this.ufoNode.width / 2)) {
+                this.ufoSuccess();
+            }
         }
     },
 
     ufoSuccess() {
+        console.log("ufo success")
         this.ufoNode.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
-        this,ufoNode.active = false
-        this.earth.width = this.earth.width * 0.5
+        this.ufoNode.active = false
+        this.earth.width = this.earth.width * 0.6
+        this.earth.height = this.earth.height * 0.6
     },
 
     // Update:
     update (dt) {
         this.updateBg();
+        this.driveUfo();
 
         if (this.rankScene.active) {
             this._updateSubDomainCanvas();
@@ -1014,7 +1081,7 @@ cc.Class({
                 this.videoAdProgressBar.progress = progress;
 
                 if (progress >= 1) {
-                    this.showFail();
+                    this.showFailOrAlert();
                 }
             }
             return;
@@ -1151,6 +1218,7 @@ cc.Class({
         this._setViewFullScreen(this.rankScene);
         this._setViewFullScreen(this.libraryScene);
         this._setViewFullScreen(this.videoAdScene);
+        this._setViewFullScreen(this.alertScene);
 
         this.rankingScrollView.width = width * 0.75;
         this.rankingScrollView.height = height * 0.6;
