@@ -159,12 +159,18 @@ cc.Class({
         videoAdBtn: cc.Node,
         videoNoAdBtn: cc.Node,
         videoAdProgressBar: cc.ProgressBar,
+        libraryAlertView: cc.Node,
+        libraryAlertImg: cc.Node,
+        ufoNode: cc.Node,
     },
 
     // LIFE-CYCLE CALLBACKS:
     _setConstNum () {
         this.normalPlanetWidth = this.node.width / 5;
         this.minPlanetWidth = this.normalPlanetWidth * 0.8;
+        this.libraryAlertWaitingArray = new Array();
+        this.ufoScore = 50;
+        this.ufoShowRate = 0.1;
     },
 
     onLoad () {
@@ -180,6 +186,7 @@ cc.Class({
         this.guideScene.opacity = 0;
         this.sentinel.getComponent('Sentinel').disappear();
         this.powerBar.active = false;
+        this.libraryAlertView.active = false;
         
         this.singleScoreLabel.setOpacity(0);
         this.circle.setOpacity(0);
@@ -295,6 +302,7 @@ cc.Class({
             holeRadius = Math.random() * this.normalPlanetWidth / 10 + this.normalPlanetWidth / 5 * 2;
         }
         this.blackHole.width = this.blackHole.height = holeRadius;
+        this.showUfo()
 
         //重置地球
         var starStorage = new Array('Earth');
@@ -375,7 +383,8 @@ cc.Class({
 
     showFail () {
         this.videoAdScene.active = false;     
-        this.failScene.active = true;   
+        this.failScene.active = true;
+        this.showlibraryAlert()
 
         this.failScoreLabel.getComponent(cc.Label).string = this.score;
 
@@ -613,7 +622,7 @@ cc.Class({
 
             if (this.isShowGroupRank && this.shareTicket != null) {
                 let self = this
-                this.rankTitleLbl.text = "群排行"
+                this.rankTitleLbl.string = "群排行"
                 wx.postMessage({
                     message: 'ShowGroup',
                     pageSize: size,
@@ -621,7 +630,7 @@ cc.Class({
                     shareTicket: self.shareTicket
                 })
             } else {
-                this.rankTitleLbl.text = "好友排行"
+                this.rankTitleLbl.string = "好友排行"
                 wx.postMessage({
                     message: 'Show',
                     pageSize: size,
@@ -717,6 +726,7 @@ cc.Class({
                         //libraryObject.isUnlock = true
                         cc.sys.localStorage.setItem('redHint', 1);
                         this.loadHint();
+                        this.libraryAlertWaitingArray.push(libraryObject)
                     }
                 }
                 libraryData[i] = libraryObject
@@ -724,6 +734,23 @@ cc.Class({
             }
         }
         this.saveEvent(libraryData)
+    },
+
+    showlibraryAlert() {
+        if (this.libraryAlertWaitingArray.length > 0) {
+            starUrl = this.libraryAlertWaitingArray[0].starImage
+            this.libraryAlertWaitingArray.splice(0, 1)
+            var self = this;
+            cc.loader.loadRes(starUrl, cc.SpriteFrame, function (err, spriteFrame) {    
+                self.libraryAlertImg.getComponent(cc.Sprite).spriteFrame = spriteFrame;
+            });
+            this.libraryAlertView.active = true
+        }
+    },
+
+    closeLibraryAlert() {
+        this.libraryAlertView.active = false
+        this.showlibraryAlert()
     },
 
     loadEvent() {
@@ -872,6 +899,37 @@ cc.Class({
 		})
     },
 
+    showUfo() {
+        if (this.score > this.ufoScore) {
+            if (Math.random() > (1 - this.ufoShowRate)) {
+                this.driveUfo()
+            }
+        }
+    },
+
+    driveUfo() {
+        this.ufoNode.active = true
+        let rigidBody = this.ufoNode.getComponent(cc.RigidBody);
+        let center = rigidBody.getWorldCenter();
+        var vel = cc.v2(event.touch.getLocation()).sub(center).normalizeSelf();
+        vel = vel.mulSelf(rigidBody.getMass() * 4000);
+        rigidBody.applyLinearImpulse(vel,rigidBody.getWorldCenter(),true);
+    },
+
+    ufoContactDetect() {
+        var distance = this.earth.position.sub(this.ufoNode.position);
+        var gap = Math.sqrt(distance.x * distance.x + distance.y * distance.y);
+        if (gap <= (this.earth.width / 2 + this.ufoNode.width / 2)) {
+            this.ufoSuccess();
+        }
+    },
+
+    ufoSuccess() {
+        this.ufoNode.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
+        this,ufoNode.active = false
+        this.earth.width = this.earth.width * 0.5
+    },
+
     // Update:
     update (dt) {
         this.updateBg();
@@ -959,6 +1017,8 @@ cc.Class({
                     wx.vibrateShort();
                 }
             }
+
+            this.ufoContactDetect()
 
             let vel = this.earth.getComponent(cc.RigidBody).linearVelocity;
             //cc.log(vel);
