@@ -174,7 +174,6 @@ cc.Class({
         this.minPlanetWidth = this.normalPlanetWidth * 0.8;
         this.libraryAlertWaitingArray = new Array();
         this.ufoScore = 50;
-        this.ufoShowRate = 0.5;
     },
 
     onLoad () {
@@ -277,7 +276,7 @@ cc.Class({
         //         }
         //     }
         // }
-        this.scoreLabel.getComponent(cc.Label).string = this.score;
+        this.scoreLabel.getComponent(cc.Label).string = '';
 
         this.continue();
     },
@@ -301,6 +300,7 @@ cc.Class({
         this.singleScore = 0;
         this.ufoNode.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
         this.ufoNode.active = false
+        this.ufoMutation = false
 
         if (this.isGuideMode) {
             var finished = cc.callFunc(function () {
@@ -313,27 +313,40 @@ cc.Class({
         }
         this.isGuideMode = false;
 
-        this.mars.active = true;
+        // this.mars.active = true;
+        var action = cc.fadeIn(0.01);
+        this.mars.stopAllActions();
+        this.mars.runAction(action);
+        this.mars.getComponent(cc.PhysicsCircleCollider).enabled = true;
 
         let width = this.node.width;
         let height = this.node.height;
 
         //科学难度
+        this.ufoShowRate = 0;
         var holeRadius;
+        var positionRatio = 0.25;
         if (this.score <= 5) {
             holeRadius = this.normalPlanetWidth * 3;
+            positionRatio = 0.1;
         } else if (this.score <= 10) {
             holeRadius = Math.random() * this.normalPlanetWidth / 2 + this.normalPlanetWidth * 2.5;
+            positionRatio = 0.15;
         } else if (this.score <= 20) {
             holeRadius = Math.random() * this.normalPlanetWidth / 2 + this.normalPlanetWidth * 2;
+            positionRatio = 0.2;
         } else if (this.score <= 50) {
             holeRadius = Math.random() * this.normalPlanetWidth / 2 + this.normalPlanetWidth * 1.5;
+            this.ufoShowRate = 0.5;
         } else if (this.score <= 100) {
             holeRadius = Math.random() * this.normalPlanetWidth / 2 + this.normalPlanetWidth;
+            this.ufoShowRate = 0.75;
         } else if (this.score <= 200) {
             holeRadius = Math.random() * this.normalPlanetWidth / 2 + this.normalPlanetWidth / 2;
+            this.ufoShowRate = 1;
         } else {
             holeRadius = Math.random() * this.normalPlanetWidth / 10 + this.normalPlanetWidth / 5 * 2;
+            this.ufoShowRate = 1;
         }
         this.blackHole.width = this.blackHole.height = holeRadius;
 
@@ -355,9 +368,9 @@ cc.Class({
             self.earth.active = true;	
         });
         
-        this.mars.setPosition(Math.random() * width / 2 - width / 4, -height/3);
-        this.earth.setPosition(Math.random() * width / 2 - width / 4, Math.random() * height / 4 - height / 8);
-        this.blackHole.setPosition(Math.random() * width / 2 - width / 4, height / 3);
+        this.mars.setPosition((Math.random() * 2 - 1) * width  * positionRatio, -height/3);
+        this.earth.setPosition((Math.random() * 2 - 1) * width  * positionRatio, Math.random() * height / 4 - height / 8);
+        this.blackHole.setPosition((Math.random() * 2 - 1) * width  * positionRatio, height / 3);
         this.galaxy.setPosition(this.blackHole.position);
 
         this.mars.width = this.normalPlanetWidth
@@ -472,6 +485,14 @@ cc.Class({
             this.singleScore = this.combo * 3;
 
             this.audio.getComponents(cc.AudioSource)[4].play();
+
+            var animation;
+            if (this.blackHole.width > this.normalPlanetWidth) {
+                animation = cc.sequence(cc.scaleTo(0.1, 0.8), cc.scaleTo(0.1, 1));
+            } else {
+                animation = cc.sequence(cc.scaleTo(0.1, 1.2), cc.scaleTo(0.1, 1));
+            }
+            this.blackHole.runAction(animation);
         } else {
             this.combo = 0;
             this.singleScore = 2;
@@ -486,8 +507,12 @@ cc.Class({
         var scoreText = '';
         if (this.combo > 0) {
             scoreText = '完美';
+            this.singleScoreLabel.color = cc.color(238, 118, 0, 255);
+            this.singleScoreLabel.getComponent(cc.Label).fontSize = 25;
         } else {
             scoreText = '命中';
+            this.singleScoreLabel.color = cc.color(255, 255, 255, 255);
+            this.singleScoreLabel.getComponent(cc.Label).fontSize = 20;
         }
         scoreText += '  +' + this.singleScore;
         var bounceScore = Global.bounceCount * 2 * (this.combo + 1);
@@ -801,8 +826,8 @@ cc.Class({
 
         let marginX = this.node.width / 15
         let itemW = 0.5 * (contentNode.width - marginX * 3)
-        let itemH = itemW / 2 * 3
-        let marginY = (this.libraryScrollView.node.height - 2 * itemH) / 3
+        let itemH = itemW
+        let marginY = marginX
 
         contentNode.height = this.libraryScrollView.node.height + Math.floor((libraryData.length - 3) / 2) * (itemH + marginY)
 
@@ -927,13 +952,10 @@ cc.Class({
             redHint = 1
         }
         
-        var failHint = cc.find("LibraryBtn/Hint", this.failScene);
         var loginHint = cc.find("LibraryBtn/Hint", this.loginScene);
         if (redHint == 1) {
-            failHint.active = true;
             loginHint.active = true;
         } else {
-            failHint.active = false;
             loginHint.active = false;
         }
     },
@@ -1052,14 +1074,25 @@ cc.Class({
                 this.ufoSuccess();
             }
         }
+        if (this.ufoMutation) {
+            console.log("ufo detect")
+            this.earth.width = this.earth.height = this.earth.width - this.normalPlanetWidth * 0.6 / 30;
+            console.log(this.earth.width)
+            if (this.earth.width <= this.normalPlanetWidth * 0.6) {
+                this.ufoMutation = false;
+            }
+        }
     },
 
     ufoSuccess() {
         console.log("ufo success")
         this.ufoNode.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
         this.ufoNode.active = false
-        this.earth.width = this.earth.width * 0.6
-        this.earth.height = this.earth.height * 0.6
+        this.ufoMutation = true
+        
+        if (CC_WECHATGAME) {
+            wx.vibrateShort();
+        }
     },
 
     // Update:
@@ -1139,9 +1172,12 @@ cc.Class({
 
         //碰到地球的情况
         if (this.earth.onContact) {
-            if (this.mars.active) {
-                this.mars.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
-                this.mars.active = false;
+            if (this.marsBegan) {
+                // this.mars.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
+                // this.mars.active = false;
+                var action = cc.fadeOut(0.3);
+                this.mars.runAction(action);
+                this.mars.getComponent(cc.PhysicsCircleCollider).enabled = false;
                 this.marsBegan = false;
 
                 this.audio.getComponents(cc.AudioSource)[0].play();
