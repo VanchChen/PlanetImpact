@@ -96,10 +96,6 @@ cc.Class({
             default: null,
             type: cc.Node
         },
-        galaxy: {
-            default: null,
-            type: cc.Node
-        },
         friendRankBtn: {
             default: null,
             type: cc.Node
@@ -137,10 +133,6 @@ cc.Class({
             default: null,
             type: cc.Node
         },
-        sentinel: {
-            default: null,
-            type: cc.Node
-        },
         powerBar: {
             default: null,
             type: cc.Node
@@ -157,6 +149,7 @@ cc.Class({
         },
         videoAdLabel: cc.Label,
         videoAdBtn: cc.Node,
+        resetAdBtn: cc.Node,
         videoNoAdBtn: cc.Node,
         videoAdProgressBar: cc.ProgressBar,
         alertScene: cc.Node,
@@ -187,7 +180,6 @@ cc.Class({
         //UI适配
         this._updateUI();
         this.guideScene.opacity = 0;
-        this.sentinel.getComponent('Sentinel').disappear();
         this.powerBar.active = false;
         this.alertScene.active = false;
         this.ufoNode.active = false;
@@ -283,6 +275,7 @@ cc.Class({
         this.times = 0;
 
         this.watchedVideoAd = false;
+        this.resetedAd = false;
 
         // let libraryData = this.loadEvent()
         // for (var i = 0; i < libraryData.length; ++ i) {
@@ -333,6 +326,10 @@ cc.Class({
         }
         this.isGuideMode = false;
 
+        if (this.score > 5 && this.resetedAd == false) {
+            this.resetAdBtn.active = true;
+        }
+         
         // this.mars.active = true;
         var action = cc.fadeIn(0.01);
         this.mars.stopAllActions();
@@ -377,15 +374,21 @@ cc.Class({
         cc.loader.loadRes(this.starStorage[earthIndex], cc.SpriteFrame, function (err, spriteFrame) {	
             self.earth.getComponent(cc.Sprite).spriteFrame = spriteFrame;	
             self.earth.active = true;	
+            self.earth.scale = 0;
+            self.earth.runAction(cc.scaleTo(0.2, 1));
         });
         
-        this.mars.setPosition((Math.random() * 2 - 1) * width  * positionRatio, -height/3);
-        this.earth.setPosition((Math.random() * 2 - 1) * width  * positionRatio, Math.random() * height / 4 - height / 8);
-        this.blackHole.setPosition((Math.random() * 2 - 1) * width  * positionRatio, height / 3);
-        this.galaxy.setPosition(this.blackHole.position);
+        //黑洞动画
+        this.blackHole.runAction(cc.moveTo(0.5, cc.v2((Math.random() * 2 - 1) * width  * positionRatio, height / 3)));
 
-        this.mars.width = this.normalPlanetWidth
-        this.mars.height = this.normalPlanetWidth
+        //火星动画
+        this.mars.active = true;
+        this.mars.setPosition((Math.random() * 2 - 1) * width  * positionRatio, -height/3);
+        this.mars.width = this.mars.height = this.normalPlanetWidth;
+        this.mars.scale = 0;
+        this.mars.runAction(cc.scaleTo(0.2, 1));
+           
+        this.earth.setPosition((Math.random() * 2 - 1) * width  * positionRatio, Math.random() * height / 4 - height / 8);
         this.earth.width = this.normalPlanetWidth
         this.earth.height = this.normalPlanetWidth
         
@@ -394,9 +397,6 @@ cc.Class({
 
         //clear bounce count
         Global.bounceCount = 0;
-
-        //恢复火星
-        this.mars.active = true;
         
         if (this.score > this.ufoScore) {
             if (Math.random() > (1 - this.ufoShowRate)) {
@@ -415,6 +415,7 @@ cc.Class({
     fail () {
         this.marsBegan = false;
         this.earth.onContact = false;
+        this.resetAdBtn.active = false;
 
         if (this.isGuideMode) {
             this.guide();
@@ -480,7 +481,7 @@ cc.Class({
 
         this.highScoreLabel.getComponent(cc.Label).string = '历史最高分：' + highScore;
 
-        this.audio.getComponents(cc.AudioSource)[2].play();
+        //this.audio.getComponents(cc.AudioSource)[2].play();
         //添加触摸监听
         this.node.off(cc.Node.EventType.TOUCH_START, this.onTouchBegan, this);
         this.node.off(cc.Node.EventType.TOUCH_MOVE, this.onTouchMove, this);
@@ -532,6 +533,9 @@ cc.Class({
             scoreText += '\n反弹  +' + bounceScore;
             //this.setEventCount("单局反弹")
         }
+        if (this.combo > 0) {
+            scoreText += '\n完美连击 x' + this.combo;
+        }
         this.singleScoreLabel.getComponent(cc.Label).string = scoreText;
         this.scoreLabel.getComponent(cc.Label).string = this.score;
 
@@ -582,7 +586,6 @@ cc.Class({
         this.mars.setPosition(0, -height / 3);
         this.earth.setPosition(0, -height / 15);
         this.blackHole.setPosition(0, height / 3);
-        this.galaxy.setPosition(this.blackHole.position);
         this.guideFinger.setPosition(this.earth.x, this.earth.y - this.earth.height / 2 - this.guideFinger.height / 2);
         this.guideText.setPosition(0, height / 10);
         
@@ -668,24 +671,6 @@ cc.Class({
         var touchPosition = cc.v2(event.touch.getLocation());
         this.circle.setPosition(this.node.convertToNodeSpaceAR(touchPosition));
 
-        // console.log(touchPosition);
-        // if (this.sentinel.active == false) {
-        //     this.sentinel.getComponent('Sentinel').appear();
-        // }
-        // //去除之前的球
-        // let rigidBody = this.sentinel.getComponent(cc.RigidBody);
-        // rigidBody.linearVelocity = cc.v2(0,0);
-
-        // //发新的球
-        // this.sentinel.setPosition(this.mars.position);
-        // let center = rigidBody.getWorldCenter();
-        // //计算方向向量
-        // var vel = touchPosition.sub(center).normalizeSelf();
-        // //乘以质量和最大初速度
-        // vel = vel.mulSelf(100000000);
-        // //实施动量
-        // rigidBody.applyLinearImpulse(vel,rigidBody.getWorldCenter(),true);
-
         //火星如果已经开始动了，就不需要进度条了
         if (this.marsBegan || !this.mars.active) return;
 
@@ -712,11 +697,6 @@ cc.Class({
 
         this.powerBar.active = false;
 
-        //去除哨兵
-        // console.log(this.sentinel);
-        // this.sentinel.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
-        // this.sentinel.getComponent('Sentinel').disappear();
-
         var progress = this.powerBar.getComponent(cc.ProgressBar).progress;
 
         let rigidBody = this.mars.getComponent(cc.RigidBody);
@@ -731,6 +711,7 @@ cc.Class({
         rigidBody.applyLinearImpulse(vel,rigidBody.getWorldCenter(),true);
         //motion start
         this.marsBegan = true;
+        this.duringGame = true;
         //restore size
         this.touchBagan = false;
         this.mars.width = this.mars.height = this.normalPlanetWidth;
@@ -1087,6 +1068,39 @@ cc.Class({
 		})
     },
 
+    showResetAd () {
+        //失败就返回
+        if (this.failing) return;
+        if (this.duringGame) return;
+
+        if (!CC_WECHATGAME) {
+			return
+		}
+
+		let resetAd = wx.createRewardedVideoAd({
+		    adUnitId: 'adunit-d6408d066cb0170c'
+		})
+
+		let self = this
+
+		resetAd.load()
+		.then(() => {
+			resetAd.show()
+		})
+		.catch(err => console.log(err.errMsg))
+
+		resetAd.onClose(res => {
+            // 小于 2.1.0 的基础库版本，res 是一个 undefined
+            if (res && res.isEnded || res === undefined) {
+                self.resetedAd = true;
+                self.resetAdBtn.active = false;
+                self.continue()
+            } else {
+                // 播放中途退出，不下发游戏奖励
+            }
+		})
+    },
+
     showUfo() {
         let y = (Math.random() * 0.2 + 0.4) * (this.blackHole.y + this.earth.y)
         this.ufoNode.setPosition(50, y);
@@ -1213,6 +1227,7 @@ cc.Class({
             let marsVel = this.mars.getComponent(cc.RigidBody).linearVelocity;
             if (Math.abs(marsVel.x) <= this.spriteStopRatio && Math.abs(marsVel.y) <= this.spriteStopRatio) {
                 //运动停止
+                this.duringGame = false;
                 console.log("fail1");
                 this.fail();
                 
@@ -1243,6 +1258,7 @@ cc.Class({
             //cc.log(vel);
             if (Math.abs(vel.x) <= this.spriteStopRatio && Math.abs(vel.y) <= this.spriteStopRatio) {
                 //运动停止
+                this.duringGame = false;
                 this.earth.onContact = false;
                 var distance = this.earth.position.sub(this.blackHole.position);
                 var gap = Math.sqrt(distance.x * distance.x + distance.y * distance.y);
@@ -1335,6 +1351,8 @@ cc.Class({
         this._setFrame(this.circle, 0, 0, this.normalPlanetWidth, this.normalPlanetWidth);
         this.mars.getComponent(cc.PhysicsCircleCollider).radius = this.normalPlanetWidth / 2;
         this.earth.getComponent(cc.PhysicsCircleCollider).radius = this.normalPlanetWidth / 2;
+        this.ufoNode.width = 0.8 * this.normalPlanetWidth;
+        this.ufoNode.height = this.ufoNode.width / 100 * 35;
 
         //适配失败页面
         this.restartBtn.width = width / 2;
@@ -1350,6 +1368,7 @@ cc.Class({
         //适配教程图片
         this.guideText.active = false;
         this.guideFinger.active = false;
+        this.resetAdBtn.active = false;
     },
 
     _setBound (node,x, y, width, height) {
