@@ -84,10 +84,6 @@ cc.Class({
             default: null,
             type: cc.Node
         },
-        guideScene: {
-            default: null,
-            type: cc.Node
-        },
         audio: {
             default: null,
             type: cc.Node
@@ -159,6 +155,7 @@ cc.Class({
         ufoNode: cc.Node,
         guideText: cc.Node,
         guideFinger: cc.Node,
+        libraryBtn: cc.Node,
     },
 
     // LIFE-CYCLE CALLBACKS:
@@ -179,7 +176,6 @@ cc.Class({
 
         //UI适配
         this._updateUI();
-        this.guideScene.opacity = 0;
         this.powerBar.active = false;
         this.alertScene.active = false;
         this.ufoNode.active = false;
@@ -203,12 +199,10 @@ cc.Class({
 
         let date = new Date()
         let lastDateStr = cc.sys.localStorage.getItem('loginDate');
-        console.log(lastDateStr)
         if (lastDateStr != null) {
             var yesterday = new Date()
             yesterday.setDate(yesterday.getDate() - 1)// "" + date.getFullYear() + date.getMonth() + (date.getDay() - 1)
             let yesterdayStr = "" + yesterday.getFullYear() + (yesterday.getMonth() + 1) + yesterday.getDate()
-            console.log(yesterdayStr)
             if (lastDateStr == yesterdayStr) {
                 this.setEventCount("连续登录")
             }
@@ -228,7 +222,6 @@ cc.Class({
 
             wx.onShow(function (res) {
                 console.log(res);
-                console.log(res.shareTicket);
                 let shareTicket = res.shareTicket
                 if (shareTicket != null && shareTicket != undefined) {
                     self.showRankWithShareTickets(shareTicket)
@@ -236,7 +229,6 @@ cc.Class({
             })
 
             var launchOption = wx.getLaunchOptionsSync();
-            console.log("launch option")
             console.log(launchOption)
 
             let shareTicket = launchOption.shareTicket
@@ -252,7 +244,6 @@ cc.Class({
                     title: '弹弹弹！嗖嗖嗖！好玩上瘾的游戏，推荐给你！',
                     imageUrl: "res/raw-assets/resources/Share.png",
                     success(res){
-                        console.log("hahaha")
                         console.log(res)
                     },
                     fail(res){
@@ -326,7 +317,7 @@ cc.Class({
         }
         this.isGuideMode = false;
 
-        if (this.score > 5 && this.resetedAd == false) {
+        if (this.score > 5 && this.resetedAd === false) {
             this.resetAdBtn.active = true;
         }
          
@@ -379,7 +370,10 @@ cc.Class({
         });
         
         //黑洞动画
-        this.blackHole.runAction(cc.moveTo(0.5, cc.v2((Math.random() * 2 - 1) * width  * positionRatio, height / 3)));
+        var blackHolePosition = cc.v2((Math.random() * 2 - 1) * width  * positionRatio, height / 3);
+        blackHolePosition.x = Math.max(blackHolePosition.x, -width / 4);
+        blackHolePosition.x = Math.min(blackHolePosition.x, width / 4);
+        this.blackHole.runAction(cc.moveTo(0.5, blackHolePosition));
 
         //火星动画
         this.mars.active = true;
@@ -568,6 +562,7 @@ cc.Class({
         let height = this.node.height;
 
         this.guideText.active = true;
+        this.guideText.opacity = 255;
         this.guideFinger.active = true;
         if (this.isGuideMode === false) {
             //黑洞
@@ -622,20 +617,6 @@ cc.Class({
 
     // Touch Event:
     onTouchBegan (event) {
-        if (this.guideScene.opacity == 255) {
-            var self = this;
-            var finished = cc.callFunc(function () {
-                self.guideScene.opacity = 0;
-                this.startBtn.active = true;
-                this.loginFriendBtn.active = true;
-            }, this, 0);
-            var fadeAction = cc.sequence(cc.fadeOut(0.2), finished);
-            this.guideScene.runAction(fadeAction); 
-
-            event.stopPropagation();
-            return;
-        }
-
         if (this.loginScene.active || this.rankScene.active || this.libraryScene.active) {
             return;
         }
@@ -664,7 +645,7 @@ cc.Class({
 
     onTouchMove (event) {
         if (this.loginScene.active || this.rankScene.active || 
-            this.guideScene.opacity > 0 || this.libraryScene.active) {
+            this.libraryScene.active) {
             return;
         }
 
@@ -687,7 +668,7 @@ cc.Class({
 
     onTouchEnd (event) {
         if (this.loginScene.active || this.rankScene.active || 
-            this.guideScene.opacity > 0 || this.libraryScene.active) {
+            this.libraryScene.active) {
             return;
         }
 
@@ -740,7 +721,6 @@ cc.Class({
     },
 
     rankTapped () {
-        console.log('rankTapped');
         // this.failScane.active = false
         // this.rankScane.active = true
         // wx.postMessage({
@@ -805,7 +785,6 @@ cc.Class({
     },
 
     showRankWithShareTickets(shareTicket) {
-        console.log("show rank")
         if (shareTicket === null || shareTicket === undefined) {
             shareTicket = this.shareTicket
         }
@@ -929,7 +908,7 @@ cc.Class({
             {name: "", progress: 0, target: 0, starImage: "Earth", key: "none", version: "latefucking11july"},
             {name: "好友挑战", progress: 0, target: 1, starImage: "Venus", key: "friend"},
             {name: "查看群排行", progress: 0, target: 1, starImage: "Neptune", key: "group"},
-            {name: "历史最高", progress: 0, target: 20, starImage: "Pink", key: "hiscore"},
+            {name: "历史最高", progress: 0, target: 50, starImage: "Pink", key: "hiscore"},
             {name: "累计复活", progress: 0, target: 1, starImage: "DirtyPink", key: "revive"},
             {name: "连续登录", progress: 1, target: 2, starImage: "Iron", key: "loginlogin"},
         ]
@@ -982,9 +961,8 @@ cc.Class({
     },
 
     showGuideScene () {
-        this.guideScene.opacity = 255;
-        this.startBtn.active = false;
-        this.loginFriendBtn.active = false;
+        this.loginScene.active = false;
+        this.guide();
     },
 
     checkFriendRank () {
@@ -1092,6 +1070,7 @@ cc.Class({
 		resetAd.onClose(res => {
             // 小于 2.1.0 的基础库版本，res 是一个 undefined
             if (res && res.isEnded || res === undefined) {
+                console.log("重置广告回来");
                 self.resetedAd = true;
                 self.resetAdBtn.active = false;
                 self.continue()
@@ -1129,9 +1108,7 @@ cc.Class({
             }
         }
         if (this.ufoMutation) {
-            console.log("ufo detect")
             this.earth.width = this.earth.height = this.earth.width - this.normalPlanetWidth * 0.6 / 30;
-            console.log(this.earth.width)
             if (this.earth.width <= this.normalPlanetWidth * 0.6) {
                 this.ufoMutation = false;
             }
@@ -1139,7 +1116,6 @@ cc.Class({
     },
 
     ufoSuccess() {
-        console.log("ufo success")
         this.ufoNode.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
         this.ufoNode.active = false
         this.ufoMutation = true
@@ -1315,7 +1291,6 @@ cc.Class({
 
         //适配三种场景
         this._setViewFullScreen(this.loginScene);
-        this._setViewFullScreen(this.guideScene);
         this._setViewFullScreen(this.failScene);
         this._setViewFullScreen(this.rankScene);
         this._setViewFullScreen(this.libraryScene);
@@ -1353,6 +1328,8 @@ cc.Class({
         this.earth.getComponent(cc.PhysicsCircleCollider).radius = this.normalPlanetWidth / 2;
         this.ufoNode.width = 0.8 * this.normalPlanetWidth;
         this.ufoNode.height = this.ufoNode.width / 100 * 35;
+        let angle = 20;
+        this.ufoNode.runAction(cc.repeatForever(cc.sequence(cc.skewTo(1, angle, -angle), cc.skewTo(1, -angle, angle))));
 
         //适配失败页面
         this.restartBtn.width = width / 2;
@@ -1369,6 +1346,9 @@ cc.Class({
         this.guideText.active = false;
         this.guideFinger.active = false;
         this.resetAdBtn.active = false;
+        
+        //添加动画
+        this.libraryBtn.runAction(cc.repeatForever(cc.sequence(cc.scaleTo(0.5, 1.2), cc.scaleTo(1, 1))));
     },
 
     _setBound (node,x, y, width, height) {
