@@ -195,6 +195,8 @@ cc.Class({
         this.singleScoreLabel.setOpacity(0);
         this.circle.setOpacity(0);
 
+        this.showLibraryAlert();
+
         this.saveEvent(this.loadEvent())
         // for (var i = 0; i < 4; ++ i ) {
         //     let data = this.loadEvent()
@@ -206,6 +208,20 @@ cc.Class({
         this.loadHint()
 
         this.restart();
+
+        let date = new Date()
+        let lastDateStr = cc.sys.localStorage.getItem('loginDate');
+        console.log(lastDateStr)
+        if (lastDateStr != null) {
+            var yesterday = new Date()
+            yesterday.setDate(yesterday.getDate() - 1)// "" + date.getFullYear() + date.getMonth() + (date.getDay() - 1)
+            let yesterdayStr = "" + yesterday.getFullYear() + (yesterday.getMonth() + 1) + yesterday.getDate()
+            console.log(yesterdayStr)
+            if (lastDateStr == yesterdayStr) {
+                this.setEventCount("连续登录")
+            }
+        }
+        cc.sys.localStorage.setItem('loginDate', "" + date.getFullYear() + (date.getMonth() + 1) + date.getDate());
     },
     
     start () {
@@ -264,6 +280,7 @@ cc.Class({
         //clear score
         this.score = 0;
         this.combo = 0;
+        this.times = 0;
 
         this.watchedVideoAd = false;
 
@@ -277,6 +294,8 @@ cc.Class({
         //     }
         // }
         this.scoreLabel.getComponent(cc.Label).string = '';
+
+        this.reloadStarArray();
 
         this.continue();
     },
@@ -301,6 +320,7 @@ cc.Class({
         this.ufoNode.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
         this.ufoNode.active = false
         this.ufoMutation = false
+        this.times += 1
 
         if (this.isGuideMode) {
             var finished = cc.callFunc(function () {
@@ -351,19 +371,10 @@ cc.Class({
         this.blackHole.width = this.blackHole.height = holeRadius;
 
         //重置地球
-        var starStorage = new Array('Earth');
-        let libraryData = this.loadEvent()
-        for (var i = 0; i < libraryData.length; ++ i) {
-            let libraryObject = libraryData[i]
-            if (libraryObject.progress >= libraryObject.target) {
-                starStorage.push(libraryObject.starImage)
-            }
-        }
-
-        var earthIndex = Math.floor(Math.random() * starStorage.length);
+        var earthIndex = Math.floor(Math.random() * this.starStorage.length);
         this.earth.active = false;	
         var self = this;
-        cc.loader.loadRes(starStorage[earthIndex], cc.SpriteFrame, function (err, spriteFrame) {	
+        cc.loader.loadRes(this.starStorage[earthIndex], cc.SpriteFrame, function (err, spriteFrame) {	
             self.earth.getComponent(cc.Sprite).spriteFrame = spriteFrame;	
             self.earth.active = true;	
         });
@@ -583,6 +594,27 @@ cc.Class({
 
         //恢复火星
         this.mars.active = true;
+        var action = cc.fadeIn(0.01);
+        this.mars.stopAllActions();
+        this.mars.runAction(action);
+        this.mars.getComponent(cc.PhysicsCircleCollider).enabled = true;
+
+        //添加触摸监听
+        this.node.on(cc.Node.EventType.TOUCH_START, this.onTouchBegan, this);
+        this.node.on(cc.Node.EventType.TOUCH_MOVE, this.onTouchMove, this);
+        this.node.on(cc.Node.EventType.TOUCH_CANCEL, this.onTouchEnd, this);
+        this.node.on(cc.Node.EventType.TOUCH_END, this.onTouchEnd, this);
+    },
+
+    reloadStarArray() {
+        this.starStorage = new Array('Earth');
+        let libraryData = this.loadEvent()
+        for (var i = 0; i < libraryData.length; ++ i) {
+            let libraryObject = libraryData[i]
+            if (libraryObject.progress >= libraryObject.target) {
+                this.starStorage.push(libraryObject.starImage)
+            }
+        }
     },
 
     // Touch Event:
@@ -704,6 +736,12 @@ cc.Class({
         this.mars.width = this.mars.height = this.normalPlanetWidth;
         //圆圈消失
         this.circle.setOpacity(0);
+
+        //添加触摸监听
+        this.node.off(cc.Node.EventType.TOUCH_START, this.onTouchBegan, this);
+        this.node.off(cc.Node.EventType.TOUCH_MOVE, this.onTouchMove, this);
+        this.node.off(cc.Node.EventType.TOUCH_CANCEL, this.onTouchEnd, this);
+        this.node.off(cc.Node.EventType.TOUCH_END, this.onTouchEnd, this);
     },
 
     // Action:
@@ -829,7 +867,7 @@ cc.Class({
         let itemH = itemW
         let marginY = marginX
 
-        contentNode.height = this.libraryScrollView.node.height + Math.floor((libraryData.length - 3) / 2) * (itemH + marginY)
+        contentNode.height = Math.floor((libraryData.length + 1) / 2) * (itemH + marginY) + marginY
 
         for (let i = 0; i < libraryData.length; ++ i) {
             let libraryObject = libraryData[i]
@@ -903,14 +941,16 @@ cc.Class({
     },
 
     loadEvent() {
+        cc.sys.localStorage.setItem('hiScore', 0);
         var data = cc.sys.localStorage.getItem('userEvent')
         var libraryData = null
         var oriData = [
-            {name: "", progress: 0, target: 0, starImage: "Earth", key: "none", version: "midsummer"},
+            {name: "", progress: 0, target: 0, starImage: "Earth", key: "none", version: "latefucking11july"},
             {name: "好友挑战", progress: 0, target: 1, starImage: "Venus", key: "friend"},
             {name: "查看群排行", progress: 0, target: 1, starImage: "Neptune", key: "group"},
-            {name: "历史最高", progress: 0, target: 50, starImage: "Pink", key: "hiscore"},
+            {name: "历史最高", progress: 0, target: 20, starImage: "Pink", key: "hiscore"},
             {name: "累计复活", progress: 0, target: 1, starImage: "DirtyPink", key: "revive"},
+            {name: "连续登录", progress: 1, target: 2, starImage: "Iron", key: "loginlogin"},
         ]
         if (data === null || data.length === 0) {
             libraryData = oriData
@@ -919,7 +959,7 @@ cc.Class({
             data = data.replace(/\ufeff/g,"")
             libraryData = JSON.parse(data);
             let version = data[0].version
-            if (version != "midsummer") {
+            if (version != "latefucking11july") {
                 for (var i = 0; i < oriData.length; ++ i) {
                     var item = oriData[i]
                     for (var i = 0; i < libraryData.length; ++ i) {
@@ -1150,6 +1190,16 @@ cc.Class({
             
             return;
         }
+
+        //friction
+        var distance = this.earth.position.sub(this.blackHole.position);
+        var gap = Math.sqrt(distance.x * distance.x + distance.y * distance.y);
+        if (gap <= (this.earth.width / 2 + this.blackHole.width / 2)) {
+            this.earth.getComponent(cc.RigidBody).linearDamping = Math.max(5.5 - 2.5 * (this.times / 25), 3);
+        } else {
+            this.earth.getComponent(cc.RigidBody).linearDamping = 3;
+        }
+                
 
         //弹墙共15就算失败
         if (Global.bounceCount >= 15) {
