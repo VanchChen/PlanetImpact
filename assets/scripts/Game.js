@@ -242,7 +242,7 @@ cc.Class({
             wx.onShareAppMessage(function(res){
                 return {
                     title: '弹弹弹！嗖嗖嗖！好玩上瘾的游戏，推荐给你！',
-                    imageUrl: "res/raw-assets/resources/Share.png",
+                    imageUrl: "res/raw-assets/resources/ShareImage.png",
                     success(res){
                         console.log(res)
                     },
@@ -973,7 +973,7 @@ cc.Class({
         if (CC_WECHATGAME) {
             wx.shareAppMessage({
                 title: '听说99%的人都玩不过50分！不服来战',
-                imageUrl: "res/raw-assets/resources/Share.png",
+                imageUrl: "res/raw-assets/resources/ShareImage.png",
                 success(res){
                     console.log(res)
                     self.setEventCount("好友挑战", 1)
@@ -991,7 +991,7 @@ cc.Class({
         if (CC_WECHATGAME) {
             wx.shareAppMessage({
                 title: '想不到群里射术最好的，竟然是他？！',
-                imageUrl: "res/raw-assets/resources/Share.png",
+                imageUrl: "res/raw-assets/resources/ShareImage.png",
                 success(res){
                     self.setEventCount("查看群排行", 1)
                     let shareTicket = res.shareTickets[0]
