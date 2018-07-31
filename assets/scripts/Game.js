@@ -901,7 +901,6 @@ cc.Class({
     },
 
     loadEvent() {
-        cc.sys.localStorage.setItem('hiScore', 0);
         var data = cc.sys.localStorage.getItem('userEvent')
         var libraryData = null
         var oriData = [
@@ -1036,14 +1035,15 @@ cc.Class({
                 self.failing = false
                 self.watchedVideoAd = true
                 self.setEventCount("累计复活")
-                console.log("复活+1") // fucking repeat
+                console.log("复活+1") 
                 self.continue()
             } else {
                 // 播放中途退出，不下发游戏奖励
                 self.showFailOrAlert()
                 console.log("复活+0")
             }
-		})
+            videoAd.offClose(this);
+        })
     },
 
     showResetAd () {
@@ -1077,6 +1077,7 @@ cc.Class({
             } else {
                 // 播放中途退出，不下发游戏奖励
             }
+            resetAd.offClose(this);
 		})
     },
 
