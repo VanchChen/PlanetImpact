@@ -33,31 +33,23 @@ cc.Class({
     },
 
     createImage(avatarUrl) {
-        if (CC_WECHATGAME) {
-            try {
-                let image = wx.createImage();
-                image.onload = () => {
-                    try {
-                        let texture = new cc.Texture2D();
-                        texture.initWithElement(image);
-                        texture.handleLoadedTexture();
-                        this.avatarImgView.spriteFrame = new cc.SpriteFrame(texture);
-                    } catch (e) {
-                        cc.log(e);
-                        this.avatarImgView.node.active = false;
-                    }
-                };
-                image.src = avatarUrl;
-            }catch (e) {
-                cc.log(e);
-                this.avatarImgView.node.active = false;
-            }
-        } else {
-            cc.loader.load({
-                url: avatarUrl, type: 'jpg'
-            }, (err, texture) => {
-                this.avatarImgView.spriteFrame = new cc.SpriteFrame(texture);
-            });
+        try {
+            let image = wx.createImage();
+            image.onload = () => {
+                try {
+                    let texture = new cc.Texture2D();
+                    texture.initWithElement(image);
+                    texture.handleLoadedTexture();
+                    this.avatarImgView.spriteFrame = new cc.SpriteFrame(texture);
+                } catch (e) {
+                    cc.log(e);
+                    this.avatarImgView.node.active = false;
+                }
+            };
+            image.src = avatarUrl;
+        }catch (e) {
+            cc.log(e);
+            this.avatarImgView.node.active = false;
         }
     },
 
