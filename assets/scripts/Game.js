@@ -84,6 +84,7 @@ cc.Class({
             default: null,
             type: cc.Node
         },
+        percentageLbl: cc.Label,
         loginScene: {
             default: null,
             type: cc.Node
@@ -148,6 +149,7 @@ cc.Class({
             type: cc.Node 
         },
         videoAdLabel: cc.Label,
+        useBloodBtn: cc.Node,
         videoAdBtn: cc.Node,
         resetAdBtn: cc.Node,
         videoNoAdBtn: cc.Node,
@@ -164,6 +166,12 @@ cc.Class({
             default: null,
             type: cc.Prefab
         },
+        bloodLblNode: {
+            default: null,
+            type: cc.Node
+        },
+        bloodCountLbl: cc.Label,
+        bloodCountHomeLbl: cc.Label,
     },
 
     // LIFE-CYCLE CALLBACKS:
@@ -222,6 +230,16 @@ cc.Class({
     start () {
         console.log('start');
         this.rankPage = 0
+        
+        var bloodCount = cc.sys.localStorage.getItem('bloodCount');
+        console.log(bloodCount)
+        var notVirgin = cc.sys.localStorage.getItem('notCherry');
+        if (!bloodCount) {
+            bloodCount = 2
+            cc.sys.localStorage.setItem("bloodCount", bloodCount)
+        }
+        this.bloodCountHomeLbl.string = "x " + (bloodCount - 1)
+        this.bloodLblNode.runAction(cc.repeatForever(cc.sequence(cc.skewTo(0.2, 10, -10), cc.skewTo(0.2, -10, 10))));
 
         if (CC_WECHATGAME) {
             this.tex = new cc.Texture2D();
@@ -313,6 +331,7 @@ cc.Class({
         this.ufoNode.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
         this.ufoNode.active = false
         this.ufoMutation = false
+        this.scoreLabel.active = true
         this.times += 1
         this.earthHighSpeed = 0;
 
@@ -446,15 +465,31 @@ cc.Class({
     },
 
     showFailHint () {
+
+        this.scoreLabel.active = false
+
+        var btnOffsetY = 0
+        var bloodCount = cc.sys.localStorage.getItem('bloodCount');
+        if (bloodCount > 1) {
+            this.useBloodBtn.active = true
+            btnOffsetY = -20
+        } else {
+            this.useBloodBtn.active = false
+        }
         this.videoAdScene.active = true;
+        this.bloodCountLbl.string = "x " + (bloodCount - 1)
 
         let width = this.node.width;
         this.videoAdBtn.width = width / 2;
         this.videoAdBtn.height = this.restartBtn.width * 99 / 300;
         this.videoAdBtn.x = 0;
-        this.videoAdBtn.y = 0;
+        this.videoAdBtn.y = btnOffsetY;
         this.videoNoAdBtn.x = 0;
         this.videoNoAdBtn.y = -this.videoAdBtn.height * 0.5 - this.videoNoAdBtn.height * 0.5 - 30;
+        this.useBloodBtn.width = this.videoAdBtn.width
+        this.useBloodBtn.height = this.videoAdBtn.height
+        this.useBloodBtn.x = 0
+        this.useBloodBtn.y = this.videoAdBtn.height + this.videoAdBtn.y + 20
         this.videoAdLabel.string = this.score// "本次得分: " + this.score;
         this.videoAdProgressBar.totalLength = this.videoAdScene.width * 0.8;
         this.videoAdProgressBar.progress = 0;
@@ -493,6 +528,7 @@ cc.Class({
         this.submitScore(highScore);
 
         this.highScoreLabel.getComponent(cc.Label).string = '历史最高分：' + highScore;
+        this.percentageLbl.string = "超过" + this.getPercentage(this.score) + "%的玩家"
 
         //this.audio.getComponents(cc.AudioSource)[2].play();
         //添加触摸监听
@@ -560,7 +596,7 @@ cc.Class({
         var scoreAnimation = cc.sequence(cc.scaleTo(0.1, 1.5), cc.scaleTo(0.1, 1));
         this.scoreLabel.runAction(scoreAnimation);
 
-        var showScore = cc.sequence(cc.fadeIn(0.1), cc.fadeOut(0.8));
+        var showScore = cc.sequence(cc.fadeIn(0.1), cc.fadeOut(1.2));
         this.singleScoreLabel.runAction(showScore);
 
         //suck 吸入
@@ -623,6 +659,36 @@ cc.Class({
         this.node.on(cc.Node.EventType.TOUCH_MOVE, this.onTouchMove, this);
         this.node.on(cc.Node.EventType.TOUCH_CANCEL, this.onTouchEnd, this);
         this.node.on(cc.Node.EventType.TOUCH_END, this.onTouchEnd, this);
+    },
+
+    getPercentage(score) {
+        var percentage
+        if (score <= 10) {
+            percentage = (score + 1) * 4.545
+        } else if (score <= 50) {
+            percentage = 50 + (score - 10) * 1
+        } else if (score <= 100) {
+            percentage = 90 + (score - 50) * 0.12
+        } else if (score <= 200) {
+            percentage = 96 + (score - 100) * 0.02
+        } else if (score <= 400) {
+            percentage = 98 + (score - 200) * 0.005
+        } else if (score <= 899) {
+            percentage = 99 + (score - 400) * 0.002
+        } else {
+            percentage = 99.99
+        }
+        return percentage.toFixed(2)
+    },
+
+    useBlood() {
+        var bloodCount = cc.sys.localStorage.getItem('bloodCount');
+        if (bloodCount > 1) {
+            this.failing = false
+            this.watchedVideoAd = true
+            this.continue()
+            cc.sys.localStorage.setItem('bloodCount', Math.max(bloodCount - 1, 1));
+        }
     },
 
     reloadStarArray() {
@@ -816,6 +882,8 @@ cc.Class({
 
     back2Login () {
         this.restart();
+        var bloodCount = cc.sys.localStorage.getItem('bloodCount');
+        this.bloodCountHomeLbl.string = "x " + (bloodCount - 1)
         this.loginScene.active = true;
     },
 
@@ -1003,6 +1071,7 @@ cc.Class({
                 success(res){
                     console.log(res)
                     self.setEventCount("好友挑战", 1)
+                    self.getBlood()
                     self.showLibraryAlert()
                 },
                 fail(res){
@@ -1027,6 +1096,7 @@ cc.Class({
                         self.shareTicket = shareTicket
                         self.methodWaiting = self.showRankWithShareTickets
                         self.showLibraryAlert()
+                        self.getBlood()
                         // self.showRankWithShareTickets(shareTicket)
                     }
                 },
@@ -1034,6 +1104,12 @@ cc.Class({
                 } 
             })
         }
+    },
+
+    getBlood() {
+        var bloodCount = cc.sys.localStorage.getItem('bloodCount');
+        cc.sys.localStorage.setItem('bloodCount', bloodCount + 1);
+        this.bloodCountHomeLbl.string = "x " + bloodCount
     },
 
     showVideoAd () {
@@ -1167,7 +1243,7 @@ cc.Class({
         if (this.videoAdScene.active) {
             var progress = this.videoAdProgressBar.progress;
             if (progress < 1) {
-                progress += 1 / 270;
+                progress += 1 / 540;
                 this.videoAdProgressBar.progress = progress;
 
                 if (progress >= 1) {
@@ -1419,12 +1495,13 @@ cc.Class({
         this.restartBtn.width = width / 2;
         this.restartBtn.height = this.restartBtn.width * 152 / 500;
         this.restartBtn.x = 0;
-        this.restartBtn.y = 0;
+        this.restartBtn.y = 20;
         var node = this.restartBtn;
         this._setFrame(this.friendBtn, node.x, node.y - node.height - 20, node.width, node.height);
-        this._setFrame(this.friendRankBtn, node.x, node.y + node.height + 10, node.width, node.height);
+        this._setFrame(this.percentageLbl, node.x, this.failScoreLabel.y + this.failScoreLabel.height + 10, node.width, node.height);
         node = this.friendBtn;
         this._setFrame(this.groupBtn, node.x, node.y - node.height - 20, node.width, node.height);
+        this._setFrame(this.friendRankBtn, node.x, this.groupBtn.y - this.groupBtn.height - 10, node.width, node.height);
 
         //适配教程图片
         this.guideText.active = false;
