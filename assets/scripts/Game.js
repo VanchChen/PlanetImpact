@@ -56,6 +56,10 @@ cc.Class({
             default: null,
             type: cc.Node
         },
+        blackHoleParticle: {
+            default: null,
+            type: cc.Node
+        },
         scoreLabel: {
             default: null,
             type: cc.Node
@@ -156,6 +160,10 @@ cc.Class({
         guideText: cc.Node,
         guideFinger: cc.Node,
         libraryBtn: cc.Node,
+        shadowPrefab: {
+            default: null,
+            type: cc.Prefab
+        },
     },
 
     // LIFE-CYCLE CALLBACKS:
@@ -164,6 +172,7 @@ cc.Class({
         this.minPlanetWidth = this.normalPlanetWidth * 0.8;
         this.libraryAlertWaitingArray = new Array();
         this.ufoScore = 50;
+        this.frapIndex = 0;
     },
 
     onLoad () {
@@ -305,6 +314,7 @@ cc.Class({
         this.ufoNode.active = false
         this.ufoMutation = false
         this.times += 1
+        this.earthHighSpeed = 0;
 
         if (this.isGuideMode) {
             var finished = cc.callFunc(function () {
@@ -357,6 +367,13 @@ cc.Class({
             this.ufoShowRate = 1;
         }
         this.blackHole.width = this.blackHole.height = holeRadius;
+        let particle = this.blackHoleParticle.getComponent(cc.ParticleSystem);
+        particle.life = 1.5
+        particle.emissionRate = 30
+        particle.totalParticles = 50
+        particle.startSize = 0.1 * holeRadius
+        particle.startRadius = 25
+        particle.startRadiusVar = Math.max(holeRadius, 25)
 
         //重置地球
         this.earth.setPosition((Math.random() * 2 - 1) * width  * positionRatio, Math.random() * height / 4 - height / 8);
@@ -387,7 +404,9 @@ cc.Class({
         this.mars.runAction(cc.scaleTo(0.2, 1));
         
         this.mars.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
+        this.mars.getComponent(cc.RigidBody).angularVelocity = 50;
         this.earth.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
+        this.earth.getComponent(cc.RigidBody).angularVelocity = 50;
 
         //clear bounce count
         Global.bounceCount = 0;
@@ -586,6 +605,8 @@ cc.Class({
         
         this.mars.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
         this.earth.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
+        this.mars.getComponent(cc.RigidBody).angularVelocity = 50;
+        this.earth.getComponent(cc.RigidBody).angularVelocity = 50;
 
         //clear bounce count
         Global.bounceCount = 0;
@@ -885,6 +906,11 @@ cc.Class({
                 self.alertImg.getComponent(cc.Sprite).spriteFrame = spriteFrame;
             });
             this.alertScene.active = true
+        } else {
+            if (this.methodWaiting != null) {
+                this.methodWaiting()
+                this.methodWaiting = null
+            }
         }
     },
 
@@ -1190,7 +1216,28 @@ cc.Class({
         } else {
             this.earth.getComponent(cc.RigidBody).linearDamping = 3;
         }
-                
+        
+        // shadow
+        // this.frapIndex += 1
+        // let marsVel = this.mars.getComponent(cc.RigidBody).linearVelocity;
+        // let velValue = Math.sqrt(Math.sqrt(marsVel.x * marsVel.x + marsVel.y * marsVel.y))
+        // let shadowMargin = Math.round(20 * 7 / velValue)
+        // if (this.frapIndex % shadowMargin == 0 && velValue > 10 && !this.earth.onContact) {
+            
+        //     if (Math.abs(marsVel.x) > 0 || Math.abs(marsVel.y) > 0) {
+        //         var item = cc.instantiate(this.shadowPrefab);
+        //         item.width = this.mars.width
+        //         item.height = this.mars.height
+        //         item.opacity = 125
+        //         item.setPosition(this.mars.x, this.mars.y);
+        //         this.mars.parent.addChild(item)
+        
+        //         let self = this
+        //         setTimeout( function(){
+        //             item.destroy()
+        //         }, 300 )
+        //     }
+        // }
 
         //弹墙共15就算失败
         if (Global.bounceCount >= 15) {
@@ -1227,6 +1274,10 @@ cc.Class({
                 if (CC_WECHATGAME) {
                     wx.vibrateShort();
                 }
+
+                let earthVel = this.earth.getComponent(cc.RigidBody).linearVelocity;
+                let velValue = Math.sqrt(earthVel.x * earthVel.x + earthVel.y * earthVel.y);
+                this.earthHighSpeed = velValue;
             }
 
             this.ufoContactDetect()
@@ -1258,11 +1309,43 @@ cc.Class({
     },
 
     updateBg () {
+
+        let delta = 0.6;
+        let earthVel = this.earth.getComponent(cc.RigidBody).linearVelocity;
+        let velValue = Math.sqrt(earthVel.x * earthVel.x + earthVel.y * earthVel.y)
+        if (this.touchBagan) {
+            var progress = this.powerBar.getComponent(cc.ProgressBar).progress;
+            delta = 0.6 + (2.4 * progress)
+            let augularVel = 50 + 450 * progress
+            this.mars.getComponent(cc.RigidBody).angularVelocity = augularVel;
+            this.earth.getComponent(cc.RigidBody).angularVelocity = augularVel;
+            let particle = this.blackHoleParticle.getComponent(cc.ParticleSystem);
+            particle.life = Math.max(1.5 - progress * 2, 0.35)
+            particle.emissionRate = 30 + 140 * progress
+            particle.totalParticles = 50 + 176 * progress
+        } else if (this.marsBegan && !this.onContact) {
+            delta = this.highDelta;
+            // this.mars.getComponent(cc.RigidBody).angularVelocity = 200;
+            // this.earth.getComponent(cc.RigidBody).angularVelocity = 200;
+        } else {
+            if (velValue > 0) {
+                delta = 0.6 + (2.4 / this.earthHighSpeed * velValue)
+                let augularVel = 50 + 450 / this.earthHighSpeed * velValue
+                this.mars.getComponent(cc.RigidBody).angularVelocity = augularVel;
+                this.earth.getComponent(cc.RigidBody).angularVelocity = augularVel;
+                let particle = this.blackHoleParticle.getComponent(cc.ParticleSystem);
+                particle.life = 1.5 - 1.2 / this.earthHighSpeed * velValue
+                particle.emissionRate = 30 + 140 / this.earthHighSpeed * velValue
+                particle.totalParticles = 50 + 176 / this.earthHighSpeed * velValue
+            }
+        }
+        this.highDelta = delta
+
         let height = this.node.height;
-        this.bg1.setPosition(this.bg1.position.x + 1, this.bg1.position.y + 1);
-        this.bg2.setPosition(this.bg2.position.x + 1, this.bg2.position.y + 1);
-        this.bg3.setPosition(this.bg3.position.x + 1, this.bg3.position.y + 1);
-        this.bg4.setPosition(this.bg4.position.x + 1, this.bg4.position.y + 1);
+        this.bg1.setPosition(this.bg1.position.x + delta, this.bg1.position.y + delta);
+        this.bg2.setPosition(this.bg2.position.x + delta, this.bg2.position.y + delta);
+        this.bg3.setPosition(this.bg3.position.x + delta, this.bg3.position.y + delta);
+        this.bg4.setPosition(this.bg4.position.x + delta, this.bg4.position.y + delta);
         
         if (this.bgOffset < 0 && this.bg2.position.y >= 0) {
             //高大于宽
