@@ -180,8 +180,8 @@ cc.Class({
         this.alertScene.active = false;
         this.ufoNode.active = false;
         
-        this.singleScoreLabel.setOpacity(0);
-        this.circle.setOpacity(0);
+        this.singleScoreLabel.opacity = 0;
+        this.circle.opacity = 0;
 
         this.showLibraryAlert();
 
@@ -359,8 +359,12 @@ cc.Class({
         this.blackHole.width = this.blackHole.height = holeRadius;
 
         //重置地球
+        this.earth.setPosition((Math.random() * 2 - 1) * width  * positionRatio, Math.random() * height / 4 - height / 8);
+        this.earth.width = this.normalPlanetWidth
+        this.earth.height = this.normalPlanetWidth
         var earthIndex = Math.floor(Math.random() * this.starStorage.length);
-        this.earth.active = false;	
+        this.earth.active = false;
+        
         var self = this;
         cc.loader.loadRes(this.starStorage[earthIndex], cc.SpriteFrame, function (err, spriteFrame) {	
             self.earth.getComponent(cc.Sprite).spriteFrame = spriteFrame;	
@@ -381,10 +385,6 @@ cc.Class({
         this.mars.width = this.mars.height = this.normalPlanetWidth;
         this.mars.scale = 0;
         this.mars.runAction(cc.scaleTo(0.2, 1));
-           
-        this.earth.setPosition((Math.random() * 2 - 1) * width  * positionRatio, Math.random() * height / 4 - height / 8);
-        this.earth.width = this.normalPlanetWidth
-        this.earth.height = this.normalPlanetWidth
         
         this.mars.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
         this.earth.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
@@ -636,7 +636,7 @@ cc.Class({
 
         this.touchBagan = true;
         //展示圆圈
-        this.circle.setOpacity(this.circleOpacity);
+        this.circle.opacity = this.circleOpacity;
         this.powerBar.getComponent(cc.ProgressBar).progress = 0.15;
         this.progressDirection = 0;
 
@@ -697,7 +697,7 @@ cc.Class({
         this.touchBagan = false;
         this.mars.width = this.mars.height = this.normalPlanetWidth;
         //圆圈消失
-        this.circle.setOpacity(0);
+        this.circle.opacity = 0;
 
         //添加触摸监听
         this.node.off(cc.Node.EventType.TOUCH_START, this.onTouchBegan, this);

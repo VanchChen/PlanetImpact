@@ -1,5 +1,15 @@
 {
-  "ver": "1.0.0",
+  "ver": "2.0.1",
   "uuid": "f3cb930f-d680-405a-8d97-bec8e9e91619",
-  "subMetas": {}
+  "subMetas": {
+    "BlackHole": {
+      "ver": "2.2.0",
+      "uuid": "e386d477-f7b9-4910-91be-d396d9a6c500",
+      "type": "raw",
+      "wrapMode": "clamp",
+      "filterMode": "bilinear",
+      "premultiplyAlpha": false,
+      "subMetas": {}
+    }
+  }
 }
