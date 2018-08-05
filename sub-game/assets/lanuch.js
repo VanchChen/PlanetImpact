@@ -21,29 +21,27 @@ cc.Class({
     start () {
         this.index = 0
         this.pageType = 'start'
-        if (CC_WECHATGAME) {
-            wx.onMessage(data => {
-                console.log(data);
-                switch (data.message) {
-                    case 'Show':
-                        this.pageSize = data.pageSize
-                        this.pageType = data.pageType
-                        this.fetchFriendData();
-                        console.log("show");
-                        break;
-                    case 'ShowGroup':
-                        this.pageSize = data.pageSize
-                        this.pageType = data.pageType
-                        this.fetchGroupData(data.shareTicket);
-                        console.log("show group");
-                        break;
-                    case 'Submit':
-                        var highScore = data.score;
-                        this.submitScore(highScore);
-                        break;
-                }
-            });
-        }
+        wx.onMessage(data => {
+            console.log(data);
+            switch (data.message) {
+                case 'Show':
+                    this.pageSize = data.pageSize
+                    this.pageType = data.pageType
+                    this.fetchFriendData();
+                    console.log("show");
+                    break;
+                case 'ShowGroup':
+                    this.pageSize = data.pageSize
+                    this.pageType = data.pageType
+                    this.fetchGroupData(data.shareTicket);
+                    console.log("show group");
+                    break;
+                case 'Submit':
+                    var highScore = data.score;
+                    this.submitScore(highScore);
+                    break;
+            }
+        });
         // this.fetchFriendData()
     },
 
