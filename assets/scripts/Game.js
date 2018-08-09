@@ -387,12 +387,12 @@ cc.Class({
         }
         this.blackHole.width = this.blackHole.height = holeRadius;
         let particle = this.blackHoleParticle.getComponent(cc.ParticleSystem);
-        particle.life = 1.5
-        particle.emissionRate = 30
-        particle.totalParticles = 50
-        particle.startSize = 0.1 * holeRadius
+        // particle.life = 1.5
+        // particle.emissionRate = 30
+        // particle.totalParticles = 50
+        // particle.startSize = 0.1 * holeRadius
         particle.startRadius = 25
-        particle.startRadiusVar = Math.max(holeRadius, 25)
+        particle.startRadiusVar = Math.max(0.5 * holeRadius, 25)
 
         //重置地球
         this.earth.setPosition((Math.random() * 2 - 1) * width  * positionRatio, Math.random() * height / 4 - height / 8);
@@ -1395,10 +1395,10 @@ cc.Class({
             let augularVel = 50 + 450 * progress
             this.mars.getComponent(cc.RigidBody).angularVelocity = augularVel;
             this.earth.getComponent(cc.RigidBody).angularVelocity = augularVel;
-            let particle = this.blackHoleParticle.getComponent(cc.ParticleSystem);
+            /*let particle = this.blackHoleParticle.getComponent(cc.ParticleSystem);
             particle.life = Math.max(1.5 - progress * 2, 0.35)
             particle.emissionRate = 30 + 140 * progress
-            particle.totalParticles = 50 + 176 * progress
+            particle.totalParticles = 50 + 176 * progress*/
         } else if (this.marsBegan && !this.onContact) {
             delta = this.highDelta;
             // this.mars.getComponent(cc.RigidBody).angularVelocity = 200;
@@ -1409,10 +1409,10 @@ cc.Class({
                 let augularVel = 50 + 450 / this.earthHighSpeed * velValue
                 this.mars.getComponent(cc.RigidBody).angularVelocity = augularVel;
                 this.earth.getComponent(cc.RigidBody).angularVelocity = augularVel;
-                let particle = this.blackHoleParticle.getComponent(cc.ParticleSystem);
+                /*let particle = this.blackHoleParticle.getComponent(cc.ParticleSystem);
                 particle.life = 1.5 - 1.2 / this.earthHighSpeed * velValue
                 particle.emissionRate = 30 + 140 / this.earthHighSpeed * velValue
-                particle.totalParticles = 50 + 176 / this.earthHighSpeed * velValue
+                particle.totalParticles = 50 + 176 / this.earthHighSpeed * velValue*/
             }
         }
         this.highDelta = delta
@@ -1498,7 +1498,7 @@ cc.Class({
         this.restartBtn.y = 20;
         var node = this.restartBtn;
         this._setFrame(this.friendBtn, node.x, node.y - node.height - 20, node.width, node.height);
-        this._setFrame(this.percentageLbl, node.x, this.failScoreLabel.y + this.failScoreLabel.height + 10, node.width, node.height);
+        this._setFrame(this.percentageLbl.node, node.x, this.failScoreLabel.y + this.failScoreLabel.height + 10, node.width, node.height);
         node = this.friendBtn;
         this._setFrame(this.groupBtn, node.x, node.y - node.height - 20, node.width, node.height);
         this._setFrame(this.friendRankBtn, node.x, this.groupBtn.y - this.groupBtn.height - 10, node.width, node.height);
