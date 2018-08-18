@@ -93,10 +93,6 @@ cc.Class({
             default: null,
             type: cc.Node
         },
-        friendRankBtn: {
-            default: null,
-            type: cc.Node
-        },
         restartBtn: {
             default: null,
             type: cc.Node
@@ -123,10 +119,6 @@ cc.Class({
         },
         rankTitleLbl: cc.Label,
         startBtn: {
-            default: null,
-            type: cc.Node
-        },
-        loginFriendBtn: {
             default: null,
             type: cc.Node
         },
@@ -158,14 +150,6 @@ cc.Class({
         guideText: cc.Node,
         guideFinger: cc.Node,
         libraryBtn: cc.Node,
-        shadowPrefab: {
-            default: null,
-            type: cc.Prefab
-        },
-        bloodLblNode: {
-            default: null,
-            type: cc.Node
-        },
         bloodCountLbl: cc.Label,
         bloodCountHomeLbl: cc.Label,
         bigPlanet: cc.Node,
@@ -209,7 +193,10 @@ cc.Class({
 
         this.loadHint()
 
-        this.restart();
+        this.showPlanet(false);
+
+        //禁止特殊场景
+        this.hideAllSubScene();
 
         let date = new Date()
         let lastDateStr = cc.sys.localStorage.getItem('loginDate');
@@ -236,7 +223,6 @@ cc.Class({
             cc.sys.localStorage.setItem("bloodCount", bloodCount)
         }
         this.bloodCountHomeLbl.string = "x " + (bloodCount - 1)
-        this.bloodLblNode.runAction(cc.repeatForever(cc.sequence(cc.skewTo(0.2, 10, -10), cc.skewTo(0.2, -10, 10))));
 
         if (CC_WECHATGAME) {
             this.tex = new cc.Texture2D();
@@ -279,10 +265,18 @@ cc.Class({
     },
 
     restart () {
+        this.clearConfigs();
+
+        this.continue();
+    },
+
+    clearConfigs () {
         this.failing = false;
         
         this.isShowGroupRank = false
         this.shareTicket = null
+
+        this.showPlanet(true);
 
         //clear score
         this.score = 0;
@@ -292,20 +286,9 @@ cc.Class({
         this.watchedVideoAd = false;
         this.resetedAd = false;
 
-        // let libraryData = this.loadEvent()
-        // for (var i = 0; i < libraryData.length; ++ i) {
-        //     let libraryObject = libraryData[i]
-        //     if (libraryObject.name == "单局反弹") {
-        //         if (libraryObject.progress < libraryObject.target) {
-        //             this.setEventCount("单局反弹", 0)
-        //         }
-        //     }
-        // }
         this.scoreLabel.getComponent(cc.Label).string = '';
 
         this.reloadStarArray();
-
-        this.continue();
     },
 
     restartOrAlert() {
@@ -320,10 +303,7 @@ cc.Class({
 
     continue () {
         this.rankPage = 0
-        this.rankScene.active = false
-        this.libraryScene.active = false
-        this.failScene.active = false;
-        this.videoAdScene.active = false;
+        this.hideAllSubScene();
         this.singleScore = 0;
         this.ufoNode.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
         this.ufoNode.active = false
@@ -459,7 +439,6 @@ cc.Class({
     },
 
     showFailHint () {
-
         this.scoreLabel.active = false
 
         var btnOffsetY = 0
@@ -474,14 +453,10 @@ cc.Class({
         this.bloodCountLbl.string = "x " + (bloodCount - 1)
 
         let width = this.node.width;
-        this.videoAdBtn.width = width / 2;
-        this.videoAdBtn.height = this.restartBtn.width * 99 / 300;
         this.videoAdBtn.x = 0;
         this.videoAdBtn.y = btnOffsetY;
         this.videoNoAdBtn.x = 0;
         this.videoNoAdBtn.y = -this.videoAdBtn.height * 0.5 - this.videoNoAdBtn.height * 0.5 - 30;
-        this.useBloodBtn.width = this.videoAdBtn.width
-        this.useBloodBtn.height = this.videoAdBtn.height
         this.useBloodBtn.x = 0
         this.useBloodBtn.y = this.videoAdBtn.height + this.videoAdBtn.y + 20
         this.videoAdLabel.string = this.score// "本次得分: " + this.score;
@@ -511,6 +486,7 @@ cc.Class({
     showFail () {
         this.videoAdScene.active = false;     
         this.failScene.active = true;
+        this.showPlanet(false);
 
         this.failScoreLabel.getComponent(cc.Label).string = this.score;
 
@@ -613,21 +589,19 @@ cc.Class({
         this.guideText.active = true;
         this.guideText.opacity = 255;
         this.guideFinger.active = true; 
-        if (this.isGuideMode === false) {
-            //黑洞
-            this.blackHole.width = this.blackHole.height = this.normalPlanetWidth * 3;
-            var subNode = this.blackHole.getChildByName('InsideHole');
-            subNode.width = subNode.height = this.blackHole.width * 0.8;
-            subNode = this.blackHole.getChildByName('Goal');
-            subNode.width = subNode.height = this.blackHole.width;
-            //加载地球纹理
-            this.earth.active = false;	
-            var self = this;
-            cc.loader.loadRes('Earth', cc.SpriteFrame, function (err, spriteFrame) {	
-                self.earth.getComponent(cc.Sprite).spriteFrame = spriteFrame;	
-                self.earth.active = true;	
-            });
-        }
+        //黑洞
+        this.blackHole.width = this.blackHole.height = this.normalPlanetWidth * 3;
+        var subNode = this.blackHole.getChildByName('InsideHole');
+        subNode.width = subNode.height = this.blackHole.width * 0.8;
+        subNode = this.blackHole.getChildByName('Goal');
+        subNode.width = subNode.height = this.blackHole.width;
+        //加载地球纹理
+        this.earth.active = false;	
+        var self = this;
+        cc.loader.loadRes('Earth', cc.SpriteFrame, function (err, spriteFrame) {	
+            self.earth.getComponent(cc.Sprite).spriteFrame = spriteFrame;	
+            self.earth.active = true;	
+        });
         
         this.isGuideMode = true;
         
@@ -801,7 +775,10 @@ cc.Class({
         var notVirgin = cc.sys.localStorage.getItem('notCherry');
         if (!notVirgin) {
             cc.sys.localStorage.setItem('notCherry', 1);
+            this.clearConfigs();
             this.guide();
+        } else {
+            this.restart();
         }
     },
 
@@ -879,7 +856,9 @@ cc.Class({
     },
 
     back2Login () {
-        this.restart();
+        this.showPlanet(false);
+        this.hideAllSubScene();
+         
         var bloodCount = cc.sys.localStorage.getItem('bloodCount');
         this.bloodCountHomeLbl.string = "x " + (bloodCount - 1)
         this.loginScene.active = true;
@@ -1042,17 +1021,12 @@ cc.Class({
             cc.sys.localStorage.setItem('redHint', 1);
             redHint = 1
         }
-        
-        var loginHint = cc.find("LibraryBtn/Hint", this.loginScene);
-        if (redHint == 1) {
-            loginHint.active = true;
-        } else {
-            loginHint.active = false;
-        }
     },
 
     showGuideScene () {
         this.loginScene.active = false;
+        
+        this.clearConfigs();
         this.guide();
     },
 
@@ -1220,6 +1194,28 @@ cc.Class({
         if (CC_WECHATGAME) {
             wx.vibrateShort();
         }
+    },
+
+    showPlanet (isShow) {
+        this.blackHole.active = isShow;
+        this.mars.active = isShow;
+        this.earth.active = isShow;
+        this.scoreLabel.active = isShow;
+
+        if (isShow) {
+            var spawn = cc.spawn(cc.moveTo(0.5,cc.v2(0,- this.node.height / 2 - this.bigPlanet.height / 3)).easing(cc.easeOut(3.0)), cc.scaleTo(0.5, 1.2));
+            this.bigPlanet.runAction(spawn);
+        } else {
+            var spawn = cc.spawn(cc.moveTo(0.5,cc.v2(0,0)).easing(cc.easeOut(3.0)), cc.scaleTo(0.5, 1));
+            this.bigPlanet.runAction(spawn);
+        }
+    },
+
+    hideAllSubScene () {
+        this.rankScene.active = false
+        this.libraryScene.active = false
+        this.failScene.active = false;
+        this.videoAdScene.active = false;
     },
 
     // Update:
@@ -1467,8 +1463,7 @@ cc.Class({
         }
 
         //适配大佬
-        this._setFrame(this.bigPlanet, 0, 0, width * 1.2, width * 1.2);
-        this.bigPlanet.y = - height / 2 - this.bigPlanet.height / 3;
+        this._setFrame(this.bigPlanet, 0, 0, width * 0.8, width * 0.8);
 
         //适配星球
         this._setFrame(this.mars, 0, 0 , this.normalPlanetWidth, this.normalPlanetWidth);
@@ -1481,25 +1476,12 @@ cc.Class({
         let angle = 20;
         this.ufoNode.runAction(cc.repeatForever(cc.sequence(cc.skewTo(1, angle, -angle), cc.skewTo(1, -angle, angle))));
 
-        //适配失败页面
-        this.restartBtn.width = width / 2;
-        this.restartBtn.height = this.restartBtn.width * 152 / 500;
-        this.restartBtn.x = 0;
-        this.restartBtn.y = 20;
-        var node = this.restartBtn;
-        this._setFrame(this.friendBtn, node.x, node.y - node.height - 20, node.width, node.height);
-        this._setFrame(this.percentageLbl.node, node.x, this.failScoreLabel.y + this.failScoreLabel.height + 10, node.width, node.height);
-        node = this.friendBtn;
-        this._setFrame(this.groupBtn, node.x, node.y - node.height - 20, node.width, node.height);
-        this._setFrame(this.friendRankBtn, node.x, this.groupBtn.y - this.groupBtn.height - 10, node.width, node.height);
-
         //适配教程图片
         this.guideText.active = false;
         this.guideFinger.active = false;
         this.resetAdBtn.active = false;
         
         //添加动画
-        this.libraryBtn.runAction(cc.repeatForever(cc.sequence(cc.scaleTo(0.5, 1.2), cc.scaleTo(1, 1))));
         let goal = this.blackHole.getChildByName('Goal');
         goal.runAction(cc.repeatForever(cc.sequence(cc.fadeTo(2, 50), cc.fadeTo(2, 255))));
     },
