@@ -56,10 +56,6 @@ cc.Class({
             default: null,
             type: cc.Node
         },
-        blackHoleParticle: {
-            default: null,
-            type: cc.Node
-        },
         scoreLabel: {
             default: null,
             type: cc.Node
@@ -172,6 +168,7 @@ cc.Class({
         },
         bloodCountLbl: cc.Label,
         bloodCountHomeLbl: cc.Label,
+        bigPlanet: cc.Node,
     },
 
     // LIFE-CYCLE CALLBACKS:
@@ -386,13 +383,10 @@ cc.Class({
             this.ufoShowRate = 1;
         }
         this.blackHole.width = this.blackHole.height = holeRadius;
-        let particle = this.blackHoleParticle.getComponent(cc.ParticleSystem);
-        // particle.life = 1.5
-        // particle.emissionRate = 30
-        // particle.totalParticles = 50
-        // particle.startSize = 0.1 * holeRadius
-        particle.startRadius = 25
-        particle.startRadiusVar = Math.max(0.5 * holeRadius, 25)
+        var subNode = this.blackHole.getChildByName('InsideHole');
+        subNode.width = subNode.height = this.blackHole.width * 0.8;
+        subNode = this.blackHole.getChildByName('Goal');
+        subNode.width = subNode.height = this.blackHole.width;
 
         //重置地球
         this.earth.setPosition((Math.random() * 2 - 1) * width  * positionRatio, Math.random() * height / 4 - height / 8);
@@ -618,10 +612,14 @@ cc.Class({
 
         this.guideText.active = true;
         this.guideText.opacity = 255;
-        this.guideFinger.active = true;
+        this.guideFinger.active = true; 
         if (this.isGuideMode === false) {
             //黑洞
             this.blackHole.width = this.blackHole.height = this.normalPlanetWidth * 3;
+            var subNode = this.blackHole.getChildByName('InsideHole');
+            subNode.width = subNode.height = this.blackHole.width * 0.8;
+            subNode = this.blackHole.getChildByName('Goal');
+            subNode.width = subNode.height = this.blackHole.width;
             //加载地球纹理
             this.earth.active = false;	
             var self = this;
@@ -1058,10 +1056,6 @@ cc.Class({
         this.guide();
     },
 
-    checkFriendRank () {
-
-    },
-
     share2Friend () {
         var self = this;
         if (CC_WECHATGAME) {
@@ -1395,10 +1389,6 @@ cc.Class({
             let augularVel = 50 + 450 * progress
             this.mars.getComponent(cc.RigidBody).angularVelocity = augularVel;
             this.earth.getComponent(cc.RigidBody).angularVelocity = augularVel;
-            /*let particle = this.blackHoleParticle.getComponent(cc.ParticleSystem);
-            particle.life = Math.max(1.5 - progress * 2, 0.35)
-            particle.emissionRate = 30 + 140 * progress
-            particle.totalParticles = 50 + 176 * progress*/
         } else if (this.marsBegan && !this.onContact) {
             delta = this.highDelta;
             // this.mars.getComponent(cc.RigidBody).angularVelocity = 200;
@@ -1409,10 +1399,6 @@ cc.Class({
                 let augularVel = 50 + 450 / this.earthHighSpeed * velValue
                 this.mars.getComponent(cc.RigidBody).angularVelocity = augularVel;
                 this.earth.getComponent(cc.RigidBody).angularVelocity = augularVel;
-                /*let particle = this.blackHoleParticle.getComponent(cc.ParticleSystem);
-                particle.life = 1.5 - 1.2 / this.earthHighSpeed * velValue
-                particle.emissionRate = 30 + 140 / this.earthHighSpeed * velValue
-                particle.totalParticles = 50 + 176 / this.earthHighSpeed * velValue*/
             }
         }
         this.highDelta = delta
@@ -1480,6 +1466,10 @@ cc.Class({
             this._setFrame(this.bg4, this.bgOffset - maxSize, - maxSize, maxSize, maxSize);
         }
 
+        //适配大佬
+        this._setFrame(this.bigPlanet, 0, 0, width * 1.2, width * 1.2);
+        this.bigPlanet.y = - height / 2 - this.bigPlanet.height / 3;
+
         //适配星球
         this._setFrame(this.mars, 0, 0 , this.normalPlanetWidth, this.normalPlanetWidth);
         this._setFrame(this.earth, 0, 0 , this.normalPlanetWidth, this.normalPlanetWidth);
@@ -1510,6 +1500,8 @@ cc.Class({
         
         //添加动画
         this.libraryBtn.runAction(cc.repeatForever(cc.sequence(cc.scaleTo(0.5, 1.2), cc.scaleTo(1, 1))));
+        let goal = this.blackHole.getChildByName('Goal');
+        goal.runAction(cc.repeatForever(cc.sequence(cc.fadeTo(2, 50), cc.fadeTo(2, 255))));
     },
 
     _setBound (node,x, y, width, height) {
