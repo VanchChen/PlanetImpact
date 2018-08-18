@@ -36,6 +36,9 @@ cc.Class({
 
         this.starImgView.width = this.node.width * 2 / 3
         this.starImgView.height = this.starImgView.width
+        this.coverView.width = this.node.width
+        this.coverView.height = this.node.height
+
         var self = this;
         cc.loader.loadRes(starUrl, cc.SpriteFrame, function (err, spriteFrame) {	
             self.starImgView.getComponent(cc.Sprite).spriteFrame = spriteFrame;

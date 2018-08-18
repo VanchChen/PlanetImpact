@@ -98,9 +98,9 @@ cc.Class({
         //     console.log('remove ' + i)
         // }
         this.backView.removeAllChildren()
-        console.log(this.backView.getChildren())
-        console.log('page: ' + this.pageIndex)
-        console.log('size: ' + this.pageSize)
+        // console.log(this.backView.getChildren())
+        // console.log('page: ' + this.pageIndex)
+        // console.log('size: ' + this.pageSize)
         for (let i = this.pageIndex * this.pageSize, j = 0; i < (this.pageIndex + 1) * this.pageSize; ++ i, ++ j) {
             if (i >= this.dataArray.length) {
                 return
@@ -110,19 +110,19 @@ cc.Class({
                 continue
             }
             var item
-            if (j % 2 == 0) {
+            // if (j % 2 == 0) {
                 item = cc.instantiate(this.itemTemplate0);
-            } else {
-                item = cc.instantiate(this.itemTemplate1);
-            }
+            // } else {
+            //     item = cc.instantiate(this.itemTemplate1);
+            // }
             this.backView.addChild(item);
             item.width = this.node.width
             item.height = this.node.height / this.pageSize
     		item.setPosition(0, ((0.5 * this.pageSize - j) - 0.5) * item.height);
             item.getComponent('Item').updateItem(i + 1, data.nickname, data.KVDataList[0].value, data.avatarUrl);
-            console.log('---------------------------------')
-            console.log(data)
-            console.log('add ' + j + ', ' + i)
+            // console.log('---------------------------------')
+            // console.log(data)
+            // console.log('add ' + j + ', ' + i)
     	}
     },
 

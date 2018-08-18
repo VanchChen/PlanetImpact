@@ -141,10 +141,8 @@ cc.Class({
         videoAdBtn: cc.Node,
         resetAdBtn: cc.Node,
         videoNoAdBtn: cc.Node,
-        videoAdProgressBar: cc.ProgressBar,
         alertScene: cc.Node,
         alertImg: cc.Node,
-        alertLbl: cc.Label,
         alertBtn: cc.Node,
         ufoNode: cc.Node,
         guideText: cc.Node,
@@ -160,7 +158,8 @@ cc.Class({
         this.normalPlanetWidth = this.node.width / 5;
         this.minPlanetWidth = this.normalPlanetWidth * 0.8;
         this.libraryAlertWaitingArray = new Array();
-        this.ufoScore = 50;
+        this.ufoScore = 30;
+        this.ufoSpeed = 100;
         this.frapIndex = 0;
     },
 
@@ -324,7 +323,7 @@ cc.Class({
         this.isGuideMode = false;
 
         if (this.score > 5 && this.resetedAd === false) {
-            this.resetAdBtn.active = true;
+            //this.resetAdBtn.active = true;
         }
          
         // this.mars.active = true;
@@ -340,27 +339,37 @@ cc.Class({
         this.ufoShowRate = 0;
         var holeRadius;
         var positionRatio = 0.25;
+        this.ufoSpeed = 100;
         if (this.score <= 5) {
             holeRadius = this.normalPlanetWidth * 3;
             positionRatio = 0.1;
         } else if (this.score <= 10) {
-            holeRadius = Math.random() * this.normalPlanetWidth / 2 + this.normalPlanetWidth * 2.5;
+            holeRadius = (3 - (this.score - 5) / (20 - 5) * (3 - 2)) * this.normalPlanetWidth;
             positionRatio = 0.15;
         } else if (this.score <= 20) {
-            holeRadius = Math.random() * this.normalPlanetWidth / 2 + this.normalPlanetWidth * 2;
+            holeRadius = (3 - (this.score - 5) / (20 - 5) * (3 - 2)) * this.normalPlanetWidth;
             positionRatio = 0.2;
-        } else if (this.score <= 50) {
-            holeRadius = Math.random() * this.normalPlanetWidth / 2 + this.normalPlanetWidth * 1.5;
             this.ufoShowRate = 0.5;
+        } else if (this.score <= 50) {
+            holeRadius = (2 - (this.score - 20) / (50 - 20) * (2 - 1.5)) * this.normalPlanetWidth;
+            this.ufoShowRate = 0.5;
+            this.ufoSpeed = 120;
         } else if (this.score <= 100) {
-            holeRadius = Math.random() * this.normalPlanetWidth / 2 + this.normalPlanetWidth;
+            holeRadius = (1.5 - (this.score - 50) / (100 - 50) * (1.5 - 1)) * this.normalPlanetWidth;
             this.ufoShowRate = 0.75;
+            this.ufoSpeed = 150;
+        } else if (this.score <= 150) {
+            holeRadius = Math.random() * this.normalPlanetWidth * 0.3 + this.normalPlanetWidth * 0.7;
+            this.ufoShowRate = 1;
+            this.ufoSpeed = 170;
         } else if (this.score <= 200) {
-            holeRadius = Math.random() * this.normalPlanetWidth / 2 + this.normalPlanetWidth / 2;
+            holeRadius = Math.random() * this.normalPlanetWidth * 0.3 + this.normalPlanetWidth * 0.6;
             this.ufoShowRate = 1;
+            this.ufoSpeed = 200;
         } else {
-            holeRadius = Math.random() * this.normalPlanetWidth / 10 + this.normalPlanetWidth / 5 * 2;
+            holeRadius = Math.random() * this.normalPlanetWidth * 0.3 + this.normalPlanetWidth * 0.5;
             this.ufoShowRate = 1;
+            this.ufoSpeed = 200;
         }
         this.blackHole.width = this.blackHole.height = holeRadius;
         var subNode = this.blackHole.getChildByName('InsideHole');
@@ -458,13 +467,23 @@ cc.Class({
         this.videoNoAdBtn.x = 0;
         this.videoNoAdBtn.y = -this.videoAdBtn.height * 0.5 - this.videoNoAdBtn.height * 0.5 - 30;
         this.useBloodBtn.x = 0
-        this.useBloodBtn.y = this.videoAdBtn.height + this.videoAdBtn.y + 20
+        this.useBloodBtn.y = this.videoAdBtn.height * 0.5 + this.videoAdBtn.y + 20
         this.videoAdLabel.string = this.score// "本次得分: " + this.score;
-        this.videoAdProgressBar.totalLength = this.videoAdScene.width * 0.8;
-        this.videoAdProgressBar.progress = 0;
         var highScore = cc.sys.localStorage.getItem('hiScore');
         highScore = Math.max(highScore, this.score);
         this.reviveHighScoreLabel.getComponent(cc.Label).string = '历史最高分：' + highScore;
+
+        var bannerTop = cc.game.canvas.height / 4 - this.videoNoAdBtn.y;
+        var bannerWidth = this.node.width;
+        this.bannerAd = wx.createBannerAd({
+            adUnitId: 'adunit-83999fbec2ba4998',
+            style: {
+                left: 0,
+                top: bannerTop,
+                width: bannerWidth
+            }
+        })
+        this.bannerAd.show();
 
         //添加触摸监听
         this.node.off(cc.Node.EventType.TOUCH_START, this.onTouchBegan, this);
@@ -479,6 +498,7 @@ cc.Class({
             this.showLibraryAlert()
             this.methodWaiting = this.showFail
         } else {
+            this.bannerAd.destory();
             this.showFail()
         }
     },
@@ -517,13 +537,7 @@ cc.Class({
 
             this.audio.getComponents(cc.AudioSource)[4].play();
 
-            var animation;
-            if (this.blackHole.width > this.normalPlanetWidth) {
-                animation = cc.sequence(cc.scaleTo(0.1, 0.8), cc.scaleTo(0.1, 1));
-            } else {
-                animation = cc.sequence(cc.scaleTo(0.1, 1.2), cc.scaleTo(0.1, 1));
-            }
-            this.blackHole.runAction(animation);
+            this.bigPlanet.runAction(cc.sequence(cc.scaleTo(0.1, 1.5), cc.scaleTo(0.5, 1.2)));
         } else {
             this.combo = 0;
             this.singleScore = 2;
@@ -538,11 +552,9 @@ cc.Class({
         var scoreText = '';
         if (this.combo > 0) {
             scoreText = '完美';
-            this.singleScoreLabel.color = cc.color(238, 118, 0, 255);
             this.singleScoreLabel.getComponent(cc.Label).fontSize = 25;
         } else {
             scoreText = '命中';
-            this.singleScoreLabel.color = cc.color(255, 255, 255, 255);
             this.singleScoreLabel.getComponent(cc.Label).fontSize = 20;
         }
         scoreText += '  +' + this.singleScore;
@@ -602,8 +614,15 @@ cc.Class({
             self.earth.getComponent(cc.Sprite).spriteFrame = spriteFrame;	
             self.earth.active = true;	
         });
+        this.earth.width = this.normalPlanetWidth;
+        this.earth.height = this.normalPlanetWidth;
         
         this.isGuideMode = true;
+
+        this.ufoShowRate = 0;
+        this.ufoNode.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
+        this.ufoNode.active = false
+        this.ufoMutation = false
         
         this.mars.setPosition(0, -height / 3);
         this.earth.setPosition(0, -height / 15);
@@ -656,6 +675,7 @@ cc.Class({
     useBlood() {
         var bloodCount = cc.sys.localStorage.getItem('bloodCount');
         if (bloodCount > 1) {
+            this.bannerAd.destory();
             this.failing = false
             this.watchedVideoAd = true
             this.continue()
@@ -945,7 +965,6 @@ cc.Class({
         if (this.libraryAlertWaitingArray.length > 0) {
             let starUrl = this.libraryAlertWaitingArray[0].starImage
             this.libraryAlertWaitingArray.splice(0, 1)
-            // this.alertLbl.string = "获得新星球！"
             var self = this;
             cc.loader.loadRes(starUrl, cc.SpriteFrame, function (err, spriteFrame) {    
                 self.alertImg.getComponent(cc.Sprite).spriteFrame = spriteFrame;
@@ -1083,7 +1102,9 @@ cc.Class({
     showVideoAd () {
 		if (!CC_WECHATGAME) {
 			return
-		}
+        }
+        
+        this.bannerAd.destory();
 
 		let videoAd = wx.createRewardedVideoAd({
 		    adUnitId: 'adunit-6f73f35cdca5eb92'
@@ -1154,7 +1175,7 @@ cc.Class({
     showUfo() {
         let y = (Math.random() * 0.2 + 0.4) * (this.blackHole.y + this.earth.y)
         this.ufoNode.setPosition(50, y);
-        this.ufoNode.getComponent(cc.RigidBody).linearVelocity = cc.v2(100,0);
+        this.ufoNode.getComponent(cc.RigidBody).linearVelocity = cc.v2(this.ufoSpeed,0);
         this.ufoNode.active = true;
     },
 
@@ -1163,9 +1184,9 @@ cc.Class({
             let width = this.node.width;
             let rigidBody = this.ufoNode.getComponent(cc.RigidBody);
             if (this.ufoNode.position.x > width * 0.5 - 0.5 * this.ufoNode.width - 10) {
-                this.ufoNode.getComponent(cc.RigidBody).linearVelocity = cc.v2(-100,0);
+                this.ufoNode.getComponent(cc.RigidBody).linearVelocity = cc.v2(-this.ufoSpeed,0);
             } else if (this.ufoNode.position.x < -width * 0.5 + 0.5 * this.ufoNode.width + 10) {
-                this.ufoNode.getComponent(cc.RigidBody).linearVelocity = cc.v2(100,0);
+                this.ufoNode.getComponent(cc.RigidBody).linearVelocity = cc.v2(this.ufoSpeed,0);
             }
         }
     },
@@ -1226,20 +1247,6 @@ cc.Class({
         if (this.rankScene.active) {
             this._updateSubDomainCanvas();
 
-            return;
-        }
-
-        //如果在提示中,就开启倒计时
-        if (this.videoAdScene.active) {
-            var progress = this.videoAdProgressBar.progress;
-            if (progress < 1) {
-                progress += 1 / 540;
-                this.videoAdProgressBar.progress = progress;
-
-                if (progress >= 1) {
-                    this.showFailOrAlert();
-                }
-            }
             return;
         }
 

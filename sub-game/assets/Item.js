@@ -14,6 +14,7 @@ cc.Class({
             default: null,
             type: cc.Label
         },
+        background: cc.Node,
         avatarImgView: cc.Sprite,
     },
 
@@ -25,6 +26,11 @@ cc.Class({
     },
 
     updateItem: function(rank, name, score, avatarUrl) {
+        this.background.x = 0;
+        this.background.y = 0;
+        this.background.width = this.node.width - 10;
+        this.background.height = this.node.height - 20;
+
         this.rankLbl.string = rank;
         this.nameLbl.string = name;
         this.scoreLbl.string = score;
