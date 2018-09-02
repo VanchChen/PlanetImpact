@@ -137,7 +137,7 @@ cc.Class({
             type: cc.Node 
         },
         videoAdLabel: cc.Label,
-        useBloodBtn: cc.Node,
+        share2RebornBtn: cc.Node,
         videoAdBtn: cc.Node,
         videoNoAdBtn: cc.Node,
         alertScene: cc.Node,
@@ -149,6 +149,9 @@ cc.Class({
         bloodCountLbl: cc.Label,
         bloodCountHomeLbl: cc.Label,
         bigPlanet: cc.Node,
+        stonePrefab: cc.Prefab,
+        stone: cc.Node,
+        bigNun: cc.Node,
     },
 
     // LIFE-CYCLE CALLBACKS:
@@ -159,6 +162,7 @@ cc.Class({
         this.ufoScore = 30;
         this.ufoSpeed = 100;
         this.frapIndex = 0;
+        this.totalStoneCount = 20;
     },
 
     onLoad () {
@@ -194,6 +198,14 @@ cc.Class({
 
         //禁止特殊场景
         this.hideAllSubScene();
+
+        //创建对象池
+        // this.stonePool = new cc.NodePool();
+        // this.stoneArray = new Array();
+        // for (let i = 0; i < this.totalStoneCount; i++) {
+        //     let stone = cc.instantiate(this.stonePrefab);
+        //     this.stonePool.put(stone);
+        // }
 
         let date = new Date()
         let lastDateStr = cc.sys.localStorage.getItem('loginDate');
@@ -360,6 +372,7 @@ cc.Class({
             this.ufoShowRate = 1;
             this.ufoSpeed = 200;
         }
+        holeRadius = Math.max(holeRadius, this.normalPlanetWidth);
         this.blackHole.width = this.blackHole.height = holeRadius;
         var subNode = this.blackHole.getChildByName('InsideHole');
         subNode.width = subNode.height = this.blackHole.width * 0.8;
@@ -421,6 +434,9 @@ cc.Class({
         targetCenter.x = earthCenter.x - directionConst * tmpConst;
         this.circle.setPosition(targetCenter);
 
+        //生成新石头
+        //this.spawnNewStone();
+
         //添加触摸监听
         this.node.on(cc.Node.EventType.TOUCH_START, this.onTouchBegan, this);
         this.node.on(cc.Node.EventType.TOUCH_MOVE, this.onTouchMove, this);
@@ -451,15 +467,9 @@ cc.Class({
     showFailHint () {
         this.scoreLabel.active = false
 
-        var btnOffsetY = 0
-        var bloodCount = cc.sys.localStorage.getItem('bloodCount');
-        if (bloodCount > 1) {
-            this.useBloodBtn.active = true
-            btnOffsetY = -20
-        } else {
-            this.useBloodBtn.active = false
-        }
+        var btnOffsetY = -20;
         this.videoAdScene.active = true;
+        var bloodCount = cc.sys.localStorage.getItem('bloodCount');
         this.bloodCountLbl.string = "x " + (bloodCount - 1)
 
         let width = this.node.width;
@@ -467,8 +477,8 @@ cc.Class({
         this.videoAdBtn.y = btnOffsetY;
         this.videoNoAdBtn.x = 0;
         this.videoNoAdBtn.y = -this.videoAdBtn.height * 0.5 - this.videoNoAdBtn.height * 0.5 - 30;
-        this.useBloodBtn.x = 0
-        this.useBloodBtn.y = this.videoAdBtn.height * 0.5 + this.videoAdBtn.y + 20
+        this.share2RebornBtn.x = 0
+        this.share2RebornBtn.y = this.videoAdBtn.height * 0.5 + this.videoAdBtn.y + 20
         this.videoAdLabel.string = this.score// "本次得分: " + this.score;
         var highScore = cc.sys.localStorage.getItem('hiScore');
         highScore = Math.max(highScore, this.score);
@@ -540,6 +550,7 @@ cc.Class({
 
             this.audio.getComponents(cc.AudioSource)[4].play();
 
+            this.bigNun.runAction(cc.moveTo(0.6, cc.v2(0, this.bigNun.y + 20)));
             this.bigPlanet.runAction(cc.sequence(cc.scaleTo(0.1, 1.5), cc.scaleTo(0.5, 1.2)));
         } else {
             this.combo = 0;
@@ -593,6 +604,9 @@ cc.Class({
         var spawn = cc.sequence(cc.spawn(cc.moveTo(0.2,this.blackHole.position), cc.scaleTo(0.2, 0)), finished);
         this.earth.getComponent(cc.RigidBody).angularVelocity = 2000;
         this.earth.runAction(spawn);
+
+        //石头动画
+        //this.recycleStone();
     },
 
     guide () {
@@ -616,6 +630,7 @@ cc.Class({
             self.earth.getComponent(cc.Sprite).spriteFrame = spriteFrame;	
             self.earth.active = true;	
         });
+        this.earth.scale = 1;
         this.earth.width = this.normalPlanetWidth;
         this.earth.height = this.normalPlanetWidth;
         
@@ -682,6 +697,27 @@ cc.Class({
             this.watchedVideoAd = true
             this.continue()
             cc.sys.localStorage.setItem('bloodCount', Math.max(bloodCount - 1, 1));
+        }
+    },
+
+    share2Reborn () {
+        var self = this;
+        if (CC_WECHATGAME) {
+            wx.shareAppMessage({
+                title: '听说99%的人都玩不过50分！不服来战',
+                imageUrl: "res/raw-assets/resources/ShareImage.png",
+                success(res){
+                    console.log(res)
+                    self.bannerAd.destory();
+                    self.failing = false
+                    self.showPlanet(true);
+                    self.watchedVideoAd = true
+                    self.continue()
+                },
+                fail(res){
+                    console.log(res)
+                } 
+            })
         }
     },
 
@@ -1119,6 +1155,7 @@ cc.Class({
             if (res && res.isEnded || res === undefined) {
                 // 正常播放结束，可以下发游戏奖励
                 self.failing = false
+                self.showPlanet(true);
                 self.watchedVideoAd = true
                 self.setEventCount("累计复活")
                 console.log("复活+1") 
@@ -1186,9 +1223,13 @@ cc.Class({
         if (isShow) {
             var spawn = cc.spawn(cc.moveTo(0.5,cc.v2(0,- this.node.height / 2 - this.bigPlanet.height / 3)).easing(cc.easeOut(3.0)), cc.scaleTo(0.5, 1.2));
             this.bigPlanet.runAction(spawn);
+
+            this.bigNun.runAction(cc.moveTo(0.5, cc.v2(0, this.node.height / 2 + this.bigNun.height / 4)).easing(cc.easeOut(3.0)));
         } else {
             var spawn = cc.spawn(cc.moveTo(0.5,cc.v2(0,0)).easing(cc.easeOut(3.0)), cc.scaleTo(0.5, 1));
             this.bigPlanet.runAction(spawn);
+
+            this.bigNun.runAction(cc.moveTo(0.5, cc.v2(0, this.node.height)).easing(cc.easeOut(3.0)));
         }
     },
 
@@ -1199,10 +1240,53 @@ cc.Class({
         this.videoAdScene.active = false;
     },
 
+    recycleStone () {
+        var copyArray = Array.from(this.stoneArray);
+        this.stoneArray.splice(0, this.stoneArray.length);
+        for (var i = 0; i < copyArray.length; i++) {
+            let stone = copyArray[i];
+            if (stone.position.y < this.normalPlanetWidth) {
+                //小于一个地球高度，就保留
+                this.stoneArray.push(stone);
+            } else {
+                var finished = cc.callFunc(function () {
+                    stone.removeFromParent();
+                    this.stonePool.put(stone);
+                    console.log("回收一个，池内共" + this.stonePool.size())
+                }, this);
+                var spawn = cc.sequence(cc.spawn(cc.moveTo(0.2,this.blackHole.position), cc.scaleTo(0.2, 0)), finished);
+                stone.getComponent(cc.RigidBody).linearVelocity = cc.v2(0,0);
+                stone.runAction(spawn);
+                console.log("执行一个动画")
+            }
+        }
+    },
+
+    spawnNewStone () {
+        for (let i = 0; i < 3; i++) {
+            let stone = this.stonePool.get();
+            if (stone == null) {
+                console.log("Run out stones!");
+                return;
+            } 
+
+            //console.log("before stone parent is " + stone.parent + "pos is "+ stone.position);
+            this.node.addChild(stone);
+            this.stoneArray.push(stone);
+            var stonePosition = cc.v2();
+            stonePosition.x = Math.random() * this.node.width / 4 - this.node.width / 8;
+            stonePosition.y = this.earth.position.y - this.earth.height / 2 - Math.random() * (this.node.height / 3 - this.normalPlanetWidth);
+            stone.setPosition(stonePosition);
+            //console.log("after stone parent is " + stone.parent + "pos is "+ stone.position);
+            console.log("添加一个到堆栈");
+        }
+    },
+
     // Update:
     update (dt) {
         this.updateBg();
         this.driveUfo();
+        this.updateNun();
 
         if (this.rankScene.active) {
             this._updateSubDomainCanvas();
@@ -1424,6 +1508,8 @@ cc.Class({
 
         //适配大佬
         this._setFrame(this.bigPlanet, 0, 0, width * 0.8, width * 0.8);
+        this._setFrame(this.bigNun, 0, height, width, width);
+        this.bigNun.getComponent(cc.PhysicsCircleCollider).radius = width / 2;
 
         //适配星球
         this._setFrame(this.mars, 0, 0 , this.normalPlanetWidth, this.normalPlanetWidth);
@@ -1442,6 +1528,17 @@ cc.Class({
         //添加动画
         let goal = this.blackHole.getChildByName('Goal');
         goal.runAction(cc.repeatForever(cc.sequence(cc.fadeTo(2, 50), cc.fadeTo(2, 255))));
+    },
+
+    updateNun () {
+        if (this.failing == true || this.failing == undefined) return;
+
+        if (this.bigNun.y <= 0) return;
+
+        var speed = Math.sqrt(this.score) / 75;
+        speed = Math.min(speed, 0.2);
+        speed = Math.max(speed, 0.075);
+        this.bigNun.y -= speed;
     },
 
     _setBound (node,x, y, width, height) {
