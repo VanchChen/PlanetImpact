@@ -73,7 +73,7 @@
     },
     "_skewX": 0,
     "_skewY": 0,
-    "_localZOrder": 103,
+    "_localZOrder": 413,
     "groupIndex": 0,
     "_id": ""
   },
@@ -103,7 +103,7 @@
     "_isTrimmedMode": true,
     "_state": 0,
     "_atlas": null,
-    "_id": "05irX1mNxHZa1CuBShlZ/M"
+    "_id": "b0qtkXnWdLNoBg5/PQlXLj"
   },
   {
     "__type__": "cc.RigidBody",
@@ -127,7 +127,7 @@
     "_fixedRotation": false,
     "enabledContactListener": false,
     "bullet": false,
-    "_id": "c30h3YLvxKlq4UWEBNvZQI"
+    "_id": "a5M8cF7mBEPKoIMaKZSJos"
   },
   {
     "__type__": "cc.PhysicsCircleCollider",
@@ -149,7 +149,7 @@
       "y": 0
     },
     "_radius": 18,
-    "_id": "dc58ph39NJb7SBFnzIAvok"
+    "_id": "81goXcRnhJiIkdnx7+YXtP"
   },
   {
     "__type__": "cc.PrefabInfo",
