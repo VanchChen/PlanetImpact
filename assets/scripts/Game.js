@@ -1220,6 +1220,7 @@ cc.Class({
         this.earth.active = isShow;
         this.scoreLabel.active = isShow;
 
+        this.bigNun.getComponent(cc.RigidBody).linearVelocity = cc.v2();
         if (isShow) {
             var spawn = cc.spawn(cc.moveTo(0.5,cc.v2(0,- this.node.height / 2 - this.bigPlanet.height / 3)).easing(cc.easeOut(3.0)), cc.scaleTo(0.5, 1.2));
             this.bigPlanet.runAction(spawn);
